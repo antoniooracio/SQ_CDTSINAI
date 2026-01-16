@@ -1,0 +1,105 @@
+@model SQ.CDT_SINAI.Shared.DTOs.EstablishmentDto
+
+@{
+    ViewData["Title"] = "Editar Estabelecimento";
+}
+
+<div class="container mt-5">
+    <h2>Editar Estabelecimento</h2>
+    <form asp-action="Edit" method="post">
+        <input type="hidden" asp-for="Id" />
+
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label>Nome do Estabelecimento</label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 form-group">
+                <label>Regional</label>
+                <input asp-for="Regional" class="form-control" />
+                <span asp-validation-for="Regional" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label>CNPJ</label>
+                <input asp-for="Cnpj" class="form-control mask-cnpj" placeholder="00.000.000/0000-00" />
+                <span asp-validation-for="Cnpj" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 form-group">
+                <label>Código da Unidade</label>
+                <input asp-for="UnitCode" class="form-control" />
+                <span asp-validation-for="UnitCode" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 form-group">
+                <label>CEP</label>
+                <input asp-for="ZipCode" class="form-control mask-cep" placeholder="00000-000" />
+                <span asp-validation-for="ZipCode" class="text-danger"></span>
+            </div>
+            <div class="col-md-8 form-group">
+                <label>Endereço</label>
+                <input asp-for="Address" class="form-control" />
+                <span asp-validation-for="Address" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-5 form-group">
+                <label>Bairro</label>
+                <input asp-for="Neighborhood" class="form-control" />
+                <span asp-validation-for="Neighborhood" class="text-danger"></span>
+            </div>
+            <div class="col-md-5 form-group">
+                <label>Município</label>
+                <input asp-for="City" class="form-control" />
+                <span asp-validation-for="City" class="text-danger"></span>
+            </div>
+            <div class="col-md-2 form-group">
+                <label>Estado</label>
+                <input asp-for="State" class="form-control" />
+                <span asp-validation-for="State" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label>Marcas</label>
+                <select asp-for="BrandIds" class="form-control" multiple size="5">
+                    @if (ViewBag.Brands != null)
+                    {
+                        foreach (var item in ViewBag.Brands)
+                        {
+                            <option value="@item.Id">@item.Name</option>
+                        }
+                    }
+                </select>
+                <small class="form-text text-muted">Segure Ctrl (ou Cmd) para selecionar múltiplos.</small>
+            </div>
+            <div class="col-md-6 form-group">
+                <label>Tipos de Estabelecimento</label>
+                <select asp-for="EstablishmentTypeIds" class="form-control" multiple size="5">
+                    @if (ViewBag.Types != null)
+                    {
+                        foreach (var item in ViewBag.Types)
+                        {
+                            <option value="@item.Id">@item.Name</option>
+                        }
+                    }
+                </select>
+                <small class="form-text text-muted">Segure Ctrl (ou Cmd) para selecionar múltiplos.</small>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success mt-3">Salvar</button>
+        <a asp-action="Index" class="btn btn-secondary mt-3">Voltar</a>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

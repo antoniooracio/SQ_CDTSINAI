@@ -1,0 +1,45 @@
+services:
+  # Seu Site (Frontend MVC)
+  web:
+    container_name: sq-cdt-sinai-web
+    build:
+      context: .
+      dockerfile: SQ.CDT_SINAI.Web/Dockerfile
+    ports:
+      - "5002:8080" # Acessível em http://localhost:5002
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      # Exemplo de como passar a URL da API para o container do site
+      - ApiSettings__BaseUrl=http://sq-cdt-sinai-api:8080
+    depends_on:
+      - api
+
+  # Sua API
+  api:
+    container_name: sq-cdt-sinai-api
+    build:
+      context: .
+      dockerfile: SQ.CDT_SINAI.API/Dockerfile
+    ports:
+      - "5001:8080" # Acessível em http://localhost:5001
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=db;Database=sq_cdt_sinai;User=root;Password=rootpassword;
+      - Jwt__Key=EstaEUmaChaveSecretaMuitoSeguraParaOProjetoSinai123!
+    depends_on:
+      - db
+
+  # Banco de Dados MariaDB
+  db:
+    image: mariadb:10.6
+    container_name: sq-cdt-sinai-db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: sq_cdt_sinai
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:

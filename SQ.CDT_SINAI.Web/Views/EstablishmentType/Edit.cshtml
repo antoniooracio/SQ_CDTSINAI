@@ -1,0 +1,58 @@
+@model SQ.CDT_SINAI.Shared.DTOs.EstablishmentTypeDto
+@using SQ.CDT_SINAI.Shared.Models
+
+@{
+    ViewData["Title"] = "Editar Tipo de Estabelecimento";
+}
+
+<div class="container mt-5">
+    <h2>Editar Tipo de Estabelecimento</h2>
+    <form asp-action="Edit" method="post">
+        <input type="hidden" asp-for="Id" />
+        
+        <div class="form-group">
+            <label>Nome do Tipo</label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+        
+        <div class="form-group">
+            <label>Tipo de Local de Atendimento</label>
+            <select asp-for="ServiceLocationType" class="form-control" asp-items="Html.GetEnumSelectList<ServiceLocationType>()"></select>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <label>Documentos Necessários (Abertura/Operação)</label>
+                <div class="card p-2" style="max-height: 300px; overflow-y: auto;">
+                    @foreach (var doc in ViewBag.DocumentTypes)
+                    {
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" name="NecessaryDocumentIds" value="@doc.Id" id="nec_@doc.Id" @(Model.NecessaryDocumentIds.Contains(doc.Id) ? "checked" : "")>
+                            <label class="custom-control-label" for="nec_@doc.Id">@doc.Name</label>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label>Documentos Necessários (Encerramento)</label>
+                <div class="card p-2" style="max-height: 300px; overflow-y: auto;">
+                    @foreach (var doc in ViewBag.DocumentTypes)
+                    {
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" name="ClosingDocumentIds" value="@doc.Id" id="clo_@doc.Id" @(Model.ClosingDocumentIds.Contains(doc.Id) ? "checked" : "")>
+                            <label class="custom-control-label" for="clo_@doc.Id">@doc.Name</label>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success mt-3">Salvar</button>
+        <a asp-action="Index" class="btn btn-secondary mt-3">Voltar</a>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

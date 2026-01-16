@@ -1,0 +1,21 @@
+@model SQ.CDT_SINAI.Shared.Models.Specialization
+
+@{
+    ViewData["Title"] = "Nova Especialização";
+}
+
+<div class="container mt-5">
+    <h2>Nova Especialização</h2>
+    <form asp-action="Create" method="post">
+        <div class="form-group">
+            <label>Nome da Especialização</label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+        <button type="submit" class="btn btn-success mt-3">Salvar</button>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,293 @@
+@model SQ.CDT_SINAI.Web.Models.ViewModels.EstablishmentLegalizationViewModel
+@using SQ.CDT_SINAI.Shared.Models
+
+@{
+    ViewData["Title"] = "Gestão de Documentos";
+    var currentSearch = ViewData["CurrentSearch"] as string;
+    var currentStatus = ViewData["CurrentStatus"] as DocumentStatus?;
+}
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Gestão de Legalização</h1>
+                <small>@Model.Establishment.Name - @Model.Establishment.Regional</small>
+            </div>
+            <div class="col-sm-6 text-right">
+                <a asp-action="GenerateReport" asp-route-id="@Model.Establishment.Id" target="_blank" class="btn btn-danger mr-2">
+                    <i class="fas fa-file-pdf"></i> Gerar Relatório
+                </a>
+                <a asp-action="Index" class="btn btn-default"><i class="fas fa-arrow-left"></i> Voltar</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container-fluid">
+        
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                <h5><i class="icon fas fa-check"></i> Sucesso!</h5>
+                @TempData["Success"]
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                <h5><i class="icon fas fa-ban"></i> Erro!</h5>
+                @TempData["Error"]
+            </div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-file-contract mr-1"></i> Documentos Obrigatórios</h3>
+                <div class="card-tools">
+                    <form method="get" class="form-inline">
+                        <div class="input-group input-group-sm mr-2">
+                            <select name="statusFilter" class="form-control form-control-sm" onchange="this.form.submit()">
+                                <option value="">Todos os Status</option>
+                                <option value="Pending" selected="@(currentStatus == DocumentStatus.Pending)">Pendente</option>
+                                <option value="Active" selected="@(currentStatus == DocumentStatus.Active)">Emitido</option>
+                                <option value="Expired" selected="@(currentStatus == DocumentStatus.Expired)">Vencido</option>
+                                <option value="Protocol" selected="@(currentStatus == DocumentStatus.Protocol)">Protocolo</option>
+                                <option value="Exempt" selected="@(currentStatus == DocumentStatus.Exempt)">Isento</option>
+                            </select>
+                        </div>
+                        <div class="input-group input-group-sm" style="width: 200px;">
+                            <input type="text" name="search" class="form-control float-right" placeholder="Buscar documento..." value="@currentSearch">
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-default"><i class="fas fa-search"></i></button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body table-responsive p-0">
+                <table class="table table-hover text-nowrap">
+                    <thead>
+                        <tr>
+                            <th>Documento</th>
+                            <th>Área</th>
+                            <th>Status</th>
+                            <th>Emissão</th>
+                            <th>Validade</th>
+                            <th>Arquivo</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var type in Model.DocumentTypes.Items)
+                        {
+                            var doc = Model.ExistingDocuments.FirstOrDefault(d => d.DocumentTypeId == type.Id);
+                            var status = doc?.Status ?? DocumentStatus.Pending;
+                            
+                            // Verifica vencimento por data ou status
+                            var isExpired = status == DocumentStatus.Expired || (doc?.ExpirationDate.HasValue == true && doc.ExpirationDate < DateTime.Today);
+                            var isExempt = status == DocumentStatus.Exempt;
+
+                            var statusText = status switch {
+                                _ when isExpired => "Vencido",
+                                DocumentStatus.Active => "Emitido",
+                                DocumentStatus.Pending => "Pendente",
+                                DocumentStatus.Protocol => "Protocolo",
+                                DocumentStatus.Exempt => "Isento",
+                                _ => "Outro"
+                            };
+
+                            var statusClass = status switch {
+                                _ when isExpired => "badge-danger",
+                                DocumentStatus.Active => "badge-success",
+                                DocumentStatus.Pending => "badge-warning",
+                                DocumentStatus.Protocol => "badge-info",
+                                DocumentStatus.Exempt => "badge-secondary",
+                                _ => "badge-secondary"
+                            };
+
+                            <tr class="doc-row @(isExpired ? "table-danger" : "") @(isExempt ? "text-muted" : "")" data-status="@statusText">
+                                <td>@type.Name</td>
+                                <td>@type.ResponsibleArea</td>
+                                <td><span class="badge @statusClass">@statusText</span></td>
+                                <td>@(doc?.EmissionDate?.ToString("dd/MM/yyyy") ?? "-")</td>
+                                <td>@(doc?.ExpirationDate?.ToString("dd/MM/yyyy") ?? "-")</td>
+                                <td>
+                                    @if (doc != null && !string.IsNullOrEmpty(doc.FilePath))
+                                    {
+                                        <a asp-action="DownloadDocument" asp-route-id="@doc.Id" target="_blank" class="btn btn-xs btn-outline-primary">
+                                            <i class="fas fa-download"></i> Baixar
+                                        </a>
+                                    }
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-xs btn-primary" 
+                                            onclick="openUploadModal(@type.Id, '@type.Name', '@(doc?.Status)', '@(doc?.EmissionDate?.ToString("yyyy-MM-dd"))', '@(doc?.ExpirationDate?.ToString("yyyy-MM-dd"))', '@doc?.ProtocolNumber', '@doc?.Cost', '@doc?.Justification', @(doc?.AutomaticRenewal.ToString().ToLower() ?? "false"), @(doc?.RenewalMonths ?? 0))">
+                                        <i class="fas fa-edit"></i> Atualizar
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if (Model.DocumentTypes.TotalPages > 1)
+            {
+                <div class="card-footer clearfix">
+                    <ul class="pagination pagination-sm m-0 float-right">
+                        <li class="page-item @(Model.DocumentTypes.HasPreviousPage ? "" : "disabled")">
+                            <a class="page-link" asp-action="Legalization" asp-route-id="@Model.Establishment.Id" asp-route-page="@(Model.DocumentTypes.PageNumber - 1)" asp-route-search="@currentSearch" asp-route-statusFilter="@currentStatus">&laquo;</a>
+                        </li>
+                        @for (int i = 1; i <= Model.DocumentTypes.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.DocumentTypes.PageNumber ? "active" : "")">
+                                <a class="page-link" asp-action="Legalization" asp-route-id="@Model.Establishment.Id" asp-route-page="@i" asp-route-search="@currentSearch" asp-route-statusFilter="@currentStatus">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(Model.DocumentTypes.HasNextPage ? "" : "disabled")">
+                            <a class="page-link" asp-action="Legalization" asp-route-id="@Model.Establishment.Id" asp-route-page="@Model.DocumentTypes.PageNumber + 1" asp-route-search="@currentSearch" asp-route-statusFilter="@currentStatus">&raquo;</a>
+                        </li>
+                    </ul>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Modal de Upload -->
+<div class="modal fade" id="modal-upload">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary">
+                <h4 class="modal-title" id="modalTitle">Atualizar Documento</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form asp-action="UploadDocument" method="post" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="EstablishmentId" value="@Model.Establishment.Id" />
+                    <input type="hidden" name="DocumentTypeId" id="docTypeId" />
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Situação</label>
+                            <select name="Status" id="docStatus" class="form-control" required>
+                                <option value="0">Pendente</option>
+                                <option value="1">Emitido (Ativo)</option>
+                                <option value="2">Protocolo</option>
+                                <option value="3">Provisório</option>
+                                <option value="4">Isento</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Arquivo (PDF/Imagem)</label>
+                            <input type="file" name="file" class="form-control-file" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Data de Emissão</label>
+                            <input type="date" name="EmissionDate" id="docEmission" class="form-control" />
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Data de Vencimento</label>
+                            <input type="date" name="ExpirationDate" id="docExpiration" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Nº Protocolo</label>
+                            <input type="text" name="ProtocolNumber" id="docProtocol" class="form-control" />
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Custo (R$)</label>
+                            <input type="text" name="Cost" id="docCost" class="form-control mask-money" placeholder="R$ 0,00" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <div class="custom-control custom-checkbox mt-4">
+                                <input type="checkbox" class="custom-control-input" name="AutomaticRenewal" id="docAutoRenewal" value="true">
+                                <label class="custom-control-label" for="docAutoRenewal">Renovação Automática</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Meses para Renovação</label>
+                            <input type="number" name="RenewalMonths" id="docRenewalMonths" class="form-control" min="0" placeholder="Ex: 12" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Justificativa (se Isento)</label>
+                        <textarea name="Justification" id="docJustification" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openUploadModal(typeId, typeName, status, emission, expiration, protocol, cost, justification, autoRenewal, renewalMonths) {
+            $('#docTypeId').val(typeId);
+            $('#modalTitle').text('Atualizar: ' + typeName);
+            
+            if(status) $('#docStatus').val(status == 'Active' ? 1 : status == 'Protocol' ? 2 : status == 'Provisório' ? 3 : status == 'Exempt' ? 4 : 0);
+            else $('#docStatus').val(0);
+
+            $('#docEmission').val(emission);
+            $('#docExpiration').val(expiration);
+            $('#docProtocol').val(protocol);
+            
+            if (cost) {
+                var formattedCost = parseFloat(cost).toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+                $('#docCost').val('R$ ' + formattedCost);
+            } else {
+                $('#docCost').val('');
+            }
+            $('#docJustification').val(justification);
+            
+            $('#docAutoRenewal').prop('checked', autoRenewal);
+            $('#docRenewalMonths').val(renewalMonths);
+
+            $('#modal-upload').modal('show');
+        }
+        $(document).ready(function(){
+            // Máscara de Moeda
+            $('.mask-money').on('input', function() {
+                var value = $(this).val().replace(/\D/g, '');
+                if (value) {
+                    value = (value / 100).toFixed(2) + '';
+                    value = value.replace(".", ",");
+                    value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+                    $(this).val("R$ " + value);
+                } else {
+                    $(this).val("");
+                }
+            });
+
+            // Limpar formatação ao enviar para garantir que o backend receba um decimal válido (ex: 1234.56)
+            $('form').on('submit', function() {
+                var costInput = $('#docCost');
+                var value = costInput.val();
+                if (value) {
+                    // Remove R$, pontos e troca vírgula por ponto
+                    var cleanValue = value.replace("R$ ", "").replace(/\./g, "").replace(",", ".");
+                    costInput.val(cleanValue);
+                }
+            });
+        });
+    </script>
+}

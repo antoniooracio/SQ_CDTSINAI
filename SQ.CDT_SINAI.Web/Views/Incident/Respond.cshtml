@@ -1,0 +1,51 @@
+@model SQ.CDT_SINAI.Shared.Models.Incident
+
+@{
+    ViewData["Title"] = "Responder Ocorrência";
+}
+
+<div class="container mt-5">
+    <div class="card card-primary">
+        <div class="card-header">
+            <h3 class="card-title">Responder Ocorrência #@Model.Id</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>Relator:</strong> 
+                    @if(Model.Type == SQ.CDT_SINAI.Shared.Models.IncidentType.Internal)
+                    {
+                        <span>@Model.Reporter?.Name (Interno)</span>
+                    }
+                    else
+                    {
+                        <span>@Model.ReporterName (Externo) - @Model.ReporterContact</span>
+                    }
+                </div>
+                <div class="col-md-6">
+                    <strong>Data Abertura:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm") <br/>
+                    <strong>Prazo:</strong> @Model.Deadline.ToString("dd/MM/yyyy HH:mm")
+                </div>
+            </div>
+            <hr/>
+            <div class="form-group">
+                <label>Descrição do Problema:</label>
+                <p class="p-3 bg-light border rounded">@Model.Description</p>
+            </div>
+
+            <form asp-action="Respond" method="post">
+                <input type="hidden" name="id" value="@Model.Id" />
+                
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="form-group">
+                    <label>Sua Resposta / Solução</label>
+                    <textarea name="response" class="form-control" rows="5" required placeholder="Descreva a solução aplicada..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-success">Registrar Resposta e Baixar</button>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>

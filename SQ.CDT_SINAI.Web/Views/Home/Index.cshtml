@@ -1,0 +1,290 @@
+﻿@model SQ.CDT_SINAI.Web.Models.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<!-- Alertas de Legalização (Vencimentos) -->
+<h5 class="mb-2 text-secondary"><i class="fas fa-file-contract mr-1"></i> Legalização - Vencimentos</h5>
+<div class="row mb-3">
+    <div class="col-md-3 col-sm-6 col-12">
+        <div class="info-box shadow-sm">
+            <span class="info-box-icon bg-danger"><i class="far fa-calendar-times"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Vencidos</span>
+                <span class="info-box-number">@Model.DocumentStats.Expired</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 col-12">
+        <div class="info-box shadow-sm">
+            <span class="info-box-icon bg-orange"><i class="fas fa-exclamation-circle text-white"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Vencem em 5 dias</span>
+                <span class="info-box-number">@Model.DocumentStats.ExpiresIn5Days</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 col-12">
+        <div class="info-box shadow-sm">
+            <span class="info-box-icon bg-warning"><i class="far fa-clock text-white"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Vencem em 15 dias</span>
+                <span class="info-box-number">@Model.DocumentStats.ExpiresIn15Days</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 col-12">
+        <div class="info-box shadow-sm">
+            <span class="info-box-icon bg-info"><i class="far fa-calendar-alt"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Vencem em 30 dias</span>
+                <span class="info-box-number">@Model.DocumentStats.ExpiresIn30Days</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-3 col-6">
+        <!-- small box -->
+        <div class="small-box bg-info">
+            <div class="inner">
+                <h3>@Model.TotalCollaborators</h3>
+                <p>Colaboradores</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-user-md"></i>
+            </div>
+            <a asp-controller="Collaborator" asp-action="Index" class="small-box-footer">Mais info <i class="fas fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+    <!-- ./col -->
+    <div class="col-lg-3 col-6">
+        <!-- small box -->
+        <div class="small-box bg-success">
+            <div class="inner">
+                <h3>53<sup style="font-size: 20px">%</sup></h3>
+                <p>Taxa de Ocupação</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-chart-bar"></i>
+            </div>
+            <a href="#" class="small-box-footer">Mais info <i class="fas fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+    <!-- ./col -->
+    <div class="col-lg-3 col-6">
+        <!-- small box -->
+        <div class="small-box bg-warning">
+            <div class="inner">
+                <h3>@Model.TotalSpecializations</h3>
+                <p>Especializações</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-stethoscope"></i>
+            </div>
+            <a asp-controller="Specialization" asp-action="Index" class="small-box-footer">Mais info <i class="fas fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+    <!-- ./col -->
+    <div class="col-lg-3 col-6">
+        <!-- small box -->
+        <div class="small-box bg-danger">
+            <div class="inner">
+                <h3>@Model.Incidents.TotalCount</h3>
+                <p>Alertas</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <a href="#" class="small-box-footer">Mais info <i class="fas fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+    <!-- ./col -->
+</div>
+
+<div class="row">
+    <!-- Widget de Ocorrências Pendentes -->
+    <div class="col-md-8">
+        <div class="card card-primary card-outline">
+            <div class="card-header">
+                <h3 class="card-title mt-1">
+                    <i class="fas fa-inbox mr-1"></i>
+                    Minhas Ocorrências
+                </h3>
+                
+                <form method="get" class="form-inline float-right ml-3">
+                    <input type="hidden" name="status" value="@Model.CurrentFilter" />
+                    <div class="input-group input-group-sm">
+                        <input type="date" name="startDate" class="form-control" value="@Model.StartDate?.ToString("yyyy-MM-dd")" placeholder="De" title="Data Inicial" />
+                        <input type="date" name="endDate" class="form-control" value="@Model.EndDate?.ToString("yyyy-MM-dd")" placeholder="Até" title="Data Final" />
+                        <div class="input-group-append">
+                            <button type="submit" class="btn btn-default"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="card-tools">
+                    <ul class="nav nav-pills ml-auto">
+                        <li class="nav-item">
+                            <a class="nav-link @(Model.CurrentFilter == SQ.CDT_SINAI.Shared.Models.IncidentStatus.Open ? "active" : "")" asp-action="Index" asp-route-status="Open" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")">Abertas</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(Model.CurrentFilter == SQ.CDT_SINAI.Shared.Models.IncidentStatus.Responded ? "active" : "")" asp-action="Index" asp-route-status="Responded" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")">Respondidas</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Gravidade</th>
+                            <th>Relator</th>
+                            <th>Descrição</th>
+                            <th>Prazo</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Incidents.Items.Any())
+                        {
+                            foreach (var item in Model.Incidents.Items)
+                            {
+                                var badgeClass = item.Severity == SQ.CDT_SINAI.Shared.Models.IncidentSeverity.High ? "badge-danger" :
+                                                 item.Severity == SQ.CDT_SINAI.Shared.Models.IncidentSeverity.Medium ? "badge-warning" : "badge-info";
+                                
+                                var reporter = item.Type == SQ.CDT_SINAI.Shared.Models.IncidentType.Internal ? item.Reporter?.Name : item.ReporterName + " (Ext)";
+
+                                <tr>
+                                    <td><span class="badge @badgeClass">@item.Severity</span></td>
+                                    <td>@reporter</td>
+                                    <td>@item.Description.Substring(0, Math.Min(item.Description.Length, 50))...</td>
+                                    <td>@item.Deadline.ToString("dd/MM HH:mm")</td>
+                                    <td>
+                                        @if(item.Status == SQ.CDT_SINAI.Shared.Models.IncidentStatus.Open)
+                                        {
+                                            <a asp-controller="Incident" asp-action="Respond" asp-route-id="@item.Id" class="btn btn-xs btn-primary">Responder</a>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-success">Concluído</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Nenhuma ocorrência encontrada.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if (Model.Incidents.TotalPages > 1)
+            {
+                <div class="card-footer clearfix">
+                    <ul class="pagination pagination-sm m-0 float-right">
+                        <li class="page-item @(Model.Incidents.HasPreviousPage ? "" : "disabled")">
+                            <a class="page-link" asp-action="Index" asp-route-page="@(Model.Incidents.PageNumber - 1)" asp-route-status="@Model.CurrentFilter" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")">&laquo;</a>
+                        </li>
+                        @for (int i = 1; i <= Model.Incidents.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.Incidents.PageNumber ? "active" : "")">
+                                <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-status="@Model.CurrentFilter" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(Model.Incidents.HasNextPage ? "" : "disabled")">
+                            <a class="page-link" asp-action="Index" asp-route-page="@(Model.Incidents.PageNumber + 1)" asp-route-status="@Model.CurrentFilter" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")">&raquo;</a>
+                        </li>
+                    </ul>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Coluna Direita -->
+    <div class="col-md-4">
+        <!-- Gráfico de Ocorrências -->
+        <div class="card card-success">
+            <div class="card-header">
+                <h3 class="card-title">Ocorrências por Gravidade</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="incidentChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+            </div>
+        </div>
+
+        <!-- Ações Rápidas -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Ações Rápidas</h3>
+            </div>
+            <div class="card-body">
+                <a asp-controller="Incident" asp-action="Create" class="btn btn-app bg-danger">
+                    <i class="fas fa-bullhorn"></i> Nova Ocorrência
+                </a>
+                <a asp-controller="Collaborator" asp-action="Create" class="btn btn-app bg-info">
+                    <i class="fas fa-user-plus"></i> Novo Colaborador
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- ChartJS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        $(function () {
+            // Dados vindos do Backend
+            var stats = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.IncidentStats));
+            
+            var lowCount = stats["Low"] || 0;
+            var mediumCount = stats["Medium"] || 0;
+            var highCount = stats["High"] || 0;
+
+            var ctx = document.getElementById('incidentChart').getContext('2d');
+            var incidentChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Baixa', 'Média', 'Alta'],
+                    datasets: [{
+                        label: 'Ocorrências Abertas',
+                        data: [lowCount, mediumCount, highCount],
+                        backgroundColor: [
+                            'rgba(23, 162, 184, 0.9)', // Info (Baixa)
+                            'rgba(255, 193, 7, 0.9)',  // Warning (Média)
+                            'rgba(220, 53, 69, 0.9)'   // Danger (Alta)
+                        ],
+                        borderColor: [
+                            'rgba(23, 162, 184, 1)',
+                            'rgba(255, 193, 7, 1)',
+                            'rgba(220, 53, 69, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

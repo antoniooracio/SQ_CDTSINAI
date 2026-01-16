@@ -1,0 +1,240 @@
+@model SQ.CDT_SINAI.Shared.DTOs.PaginatedResult<SQ.CDT_SINAI.Shared.Models.Establishment>
+@using SQ.CDT_SINAI.Shared.Models
+
+@{
+    ViewData["Title"] = "Lista de Estabelecimentos";
+}
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>@ViewData["Title"]</h1>
+            </div>
+            <div class="col-sm-6 text-right">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-default mr-1">
+                    <i class="fas fa-arrow-left"></i> Voltar ao menu
+                </a>
+                <a asp-action="Create" class="btn btn-success mr-1">
+                    <i class="fas fa-plus"></i> Adicionar novo registro
+                </a>
+                <button type="button" class="btn btn-secondary" disabled title="Funcionalidade futura">
+                    <i class="fas fa-archive"></i> Ver inativos
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container-fluid">
+        
+        <!-- Filtros -->
+        <div class="card card-default collapsed-card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-filter"></i> Filtros de Busca</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body" style="display: none;">
+                <form asp-action="Index" method="get">
+                    <div class="row">
+                        <div class="col-md-4 form-group">
+                            <label>Nome</label>
+                            <input type="text" name="search" class="form-control" value="@ViewData["CurrentFilter"]" placeholder="Digite o nome...">
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Endereço</label>
+                            <input type="text" class="form-control" placeholder="Digite o endereço..." disabled title="Filtro em desenvolvimento">
+                        </div>
+                        <div class="col-md-2 form-group">
+                            <label>Regional</label>
+                            <select class="form-control" disabled title="Filtro em desenvolvimento">
+                                <option value="">- Todos -</option>
+                                <option>CO</option>
+                                <option>MG</option>
+                                <option>NE</option>
+                                <option>RJ</option>
+                                <option>SP</option>
+                                <option>SUL</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 form-group">
+                            <label>Marca</label>
+                            <select class="form-control" disabled title="Filtro em desenvolvimento">
+                                <option value="">- Todos -</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 form-group">
+                            <label>CNPJ</label>
+                            <input type="text" class="form-control mask-cnpj" placeholder="00.000.000/0000-00" disabled>
+                        </div>
+                        <div class="col-md-3 form-group">
+                            <label>Código da Unidade</label>
+                            <input type="text" class="form-control" disabled>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Tipos de Site:</label>
+                            <div class="d-flex flex-wrap">
+                                <div class="icheck-primary mr-3">
+                                    <input type="checkbox" id="chk1" disabled>
+                                    <label for="chk1">Unidade de Atendimento</label>
+                                </div>
+                                <div class="icheck-primary mr-3">
+                                    <input type="checkbox" id="chk2" disabled>
+                                    <label for="chk2">NTO</label>
+                                </div>
+                                <div class="icheck-primary">
+                                    <input type="checkbox" id="chk3" disabled>
+                                    <label for="chk3">Posto de Coleta</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 text-right">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Filtrar</button>
+                            <button type="button" class="btn btn-success"><i class="fas fa-file-excel"></i> Exportar para Excel</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tabela de Resultados -->
+        <div class="card">
+            <div class="card-body table-responsive p-0">
+                <table class="table table-striped table-hover text-nowrap">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Tipo de estabelecimento</th>
+                            <th>Detalhes (Endereço)</th>
+                            <th>Documentos</th>
+                            <th class="text-center">Regional</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Items.Any())
+                        {
+                            foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="font-weight-bold">
+                                            @item.Name
+                                        </a>
+                                        <br/>
+                                        <small class="text-muted">@string.Join(", ", item.Brands.Select(b => b.Name))</small>
+                                        <br/>
+                                        <small class="text-muted">
+                                            CNPJ: @item.Cnpj | Cód: @item.UnitCode
+                                        </small>
+                                    </td>
+                                    <td style="white-space: normal; max-width: 200px;">
+                                        <small>@string.Join(", ", item.EstablishmentTypes.Select(t => t.Name))</small>
+                                    </td>
+                                    <td style="white-space: normal;">
+                                        <small>
+                                            <strong>Endereço:</strong> @item.Address, @item.Neighborhood<br>
+                                            @item.City - @item.State, CEP: @item.ZipCode
+                                        </small>
+                                    </td>
+                                    <td>
+                                        @{
+                                            var docs = item.Documents ?? new List<EstablishmentDocument>();
+                                            var total = docs.Count;
+                                            // Ativos: Status Active E Data válida (ou sem data)
+                                            var active = docs.Count(d => d.Status == DocumentStatus.Active && (!d.ExpirationDate.HasValue || d.ExpirationDate >= DateTime.Today));
+                                            // Vencidos: Status Expired OU Data vencida
+                                            var expired = docs.Count(d => d.Status == DocumentStatus.Expired || (d.ExpirationDate.HasValue && d.ExpirationDate < DateTime.Today));
+                                            // Pendentes: Pending, Protocol ou Provisional
+                                            var pending = docs.Count(d => d.Status == DocumentStatus.Pending || d.Status == DocumentStatus.Protocol || d.Status == DocumentStatus.Provisional);
+                                            
+                                            var pctActive = total > 0 ? (double)active / total * 100 : 0;
+                                            var pctExpired = total > 0 ? (double)expired / total * 100 : 0;
+                                            var pctPending = total > 0 ? (double)pending / total * 100 : 0;
+                                        }
+                                        <!-- Barra de Progresso Simulada (Amarelo/Vermelho/Verde) -->
+                                        <div class="progress-segmented" title="Ativos: @active | Vencidos: @expired | Pendentes: @pending">
+                                            <div style="width: @pctPending.ToString("0")%; background-color: #ffc107;"></div>
+                                            <div style="width: @pctExpired.ToString("0")%; background-color: #dc3545;"></div>
+                                            <div style="width: @pctActive.ToString("0")%; background-color: #28a745;"></div>
+                                        </div>
+                                        <small class="text-muted" title="Ativos / Vencidos / Pendentes / Total">@active / @expired / @pending / @total</small>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge badge-info">@item.Regional</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a asp-action="Legalization" asp-route-id="@item.Id" class="btn btn-sm btn-primary" title="Documentos">
+                                            <i class="fas fa-file-contract"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-danger" title="Remover (Em breve)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">Nenhum estabelecimento encontrado.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Paginação -->
+            @if (Model != null && Model.TotalPages > 1)
+            {
+                <div class="card-footer clearfix">
+                    <div class="float-left">
+                        Total de resultados: <strong>@Model.TotalCount</strong>
+                    </div>
+                    <ul class="pagination pagination-sm m-0 float-right">
+                        <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                            <a class="page-link" asp-action="Index" asp-route-page="@(Model.PageNumber - 1)" asp-route-search="@ViewData["CurrentFilter"]">&laquo; Anterior</a>
+                        </li>
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                                <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-search="@ViewData["CurrentFilter"]">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                            <a class="page-link" asp-action="Index" asp-route-page="@(Model.PageNumber + 1)" asp-route-search="@ViewData["CurrentFilter"]">Próximo &raquo;</a>
+                        </li>
+                    </ul>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+    @if (Model != null && Model.TotalPages > 1)
+    {
+        <nav>
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(Model.PageNumber - 1)" asp-route-search="@ViewData["CurrentFilter"]">Anterior</a>
+                </li>
+                <li class="page-item disabled"><span class="page-link">Página @Model.PageNumber de @Model.TotalPages</span></li>
+                <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(Model.PageNumber + 1)" asp-route-search="@ViewData["CurrentFilter"]">Próximo</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>

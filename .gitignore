@@ -1,0 +1,41 @@
+## Visual Studio & VS Code
+.vs/
+.vscode/
+*.user
+*.suo
+*.cache
+*.pdb
+*.sln.docstates
+
+## Build & Debug
+[Bb]in/
+[Oo]bj/
+
+## .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Publish (Arquivos gerados para produção)
+publish/
+
+## Sistema Operacional
+.DS_Store
+Thumbs.db
+
+## Dados da Aplicação (Arquivos de usuários não devem ir para o Git)
+**/Uploads/
+**/logs/
+
+## Docker
+docker-compose.override.yml
+
+## Testes
+TestResults/
+
+## Configurações Locais (Opcional - descomente se quiser ignorar configurações de dev locais)
+# appsettings.Development.json
+
+## Rider (JetBrains)
+.idea/
+*.sln.iml

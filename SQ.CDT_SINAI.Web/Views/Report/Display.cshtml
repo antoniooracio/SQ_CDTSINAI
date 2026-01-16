@@ -1,0 +1,154 @@
+@model SQ.CDT_SINAI.Shared.DTOs.ReportResultDto
+@{
+    ViewData["Title"] = "Dashboard de Ocorrências";
+    var filter = ViewBag.Filter as SQ.CDT_SINAI.Shared.DTOs.ReportFilterDto;
+}
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Dashboard de Ocorrências</h1>
+                <small>Período: @(filter?.StartDate?.ToString("dd/MM/yyyy") ?? "-") até @(filter?.EndDate?.ToString("dd/MM/yyyy") ?? "-")</small>
+            </div>
+            <div class="col-sm-6 text-right">
+                <button onclick="window.print()" class="btn btn-default"><i class="fas fa-print"></i> Imprimir</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container-fluid">
+        
+        <div class="row">
+            <div class="col-12">
+                <div class="callout callout-info">
+                    <h5><i class="fas fa-info"></i> Total de Ocorrências: @Model.TotalCount</h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Abertas x Encerradas -->
+            <div class="col-md-6">
+                <div class="card card-primary card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">Status (Abertas x Encerradas)</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="statusChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- Tipo de Ocorrência -->
+            <div class="col-md-6">
+                <div class="card card-success card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">Tipo de Ocorrência</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="categoryChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Ocorrências por Período -->
+            <div class="col-md-12">
+                <div class="card card-info card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">Evolução Mensal</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="monthChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Ocorrências por Área -->
+            <div class="col-md-6">
+                <div class="card card-warning card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">Ocorrências por Área</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="areaChart" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- Tempo Médio -->
+            <div class="col-md-6">
+                <div class="card card-danger card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">Tempo Médio de Resolução (Horas)</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="timeChart" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function createChart(id, type, labels, data, label, colors) {
+            var ctx = document.getElementById(id).getContext('2d');
+            new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        $(function () {
+            // Cores Padrão
+            var pieColors = ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de'];
+            var barColor = '#3c8dbc';
+
+            // 1. Status Chart
+            var statusData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.StatusChart));
+            createChart('statusChart', 'pie', statusData.Labels, statusData.Values, 'Status', pieColors);
+
+            // 2. Category Chart
+            var catData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CategoryChart));
+            createChart('categoryChart', 'doughnut', catData.Labels, catData.Values, 'Categorias', pieColors);
+
+            // 3. Month Chart
+            var monthData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.IncidentsByMonth));
+            createChart('monthChart', 'bar', monthData.Labels, monthData.Values, 'Ocorrências', barColor);
+
+            // 4. Area Chart (Horizontal Bar)
+            var areaData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.IncidentsByArea));
+            var ctxArea = document.getElementById('areaChart').getContext('2d');
+            new Chart(ctxArea, {
+                type: 'bar',
+                data: { labels: areaData.Labels, datasets: [{ label: 'Qtd', data: areaData.Values, backgroundColor: '#f39c12' }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false }
+            });
+
+            // 5. Time Chart
+            var timeData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AverageTimeByArea));
+            createChart('timeChart', 'bar', timeData.Labels, timeData.Values, 'Horas', '#00a65a');
+        });
+    </script>
+}

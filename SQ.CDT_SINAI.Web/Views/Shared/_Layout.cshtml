@@ -1,0 +1,324 @@
+﻿@* Caminho: SQ.CDT_SINAI.Web/Views/Shared/_Layout.cshtml *@
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SINAI</title>
+
+    <!-- Google Font: Source Sans Pro -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <!-- Theme style (AdminLTE 3) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+    
+    <!-- CSS Personalizado -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <!-- Intro.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/intro.js/minified/introjs.min.css">
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+</head>
+<body class="hold-transition sidebar-mini">
+    <div class="wrapper">
+
+        <!-- Navbar (Topo) -->
+        <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+            <!-- Left navbar links -->
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+                </li>
+                <li class="nav-item d-none d-sm-inline-block">
+                    <a asp-controller="Home" asp-action="Index" class="nav-link">Home</a>
+                </li>
+            </ul>
+
+            <!-- Right navbar links -->
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" data-widget="fullscreen" href="#" role="button">
+                        <i class="fas fa-expand-arrows-alt"></i>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="javascript:void(0);" onclick="startTour()" title="Tour Guiado">
+                        <i class="fas fa-route"></i> Tour
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Help" asp-action="Index" title="Manual do Usuário">
+                        <i class="fas fa-question-circle"></i> Ajuda
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <!-- Link de Logout Atualizado -->
+                    <a class="nav-link" asp-controller="Account" asp-action="Logout" role="button">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <!-- /.navbar -->
+
+        <!-- Main Sidebar Container (Menu Lateral) -->
+        <aside class="main-sidebar sidebar-dark-primary elevation-4">
+            <!-- Brand Logo -->
+            <a asp-controller="Home" asp-action="Index" class="brand-link">
+                <span class="brand-text font-weight-light pl-3">SQ CDT <b>Sinai</b></span>
+            </a>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Sidebar user panel (optional) -->
+                <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+                    <div class="image">
+                        <img src="https://adminlte.io/themes/v3/dist/img/user2-160x160.jpg" class="img-circle elevation-2" alt="User Image">
+                    </div>
+                    <div class="info">
+                        <a href="#" class="d-block">@(User.Identity?.Name ?? "Usuário")</a>
+                    </div>
+                </div>
+
+                <!-- Sidebar Menu -->
+                <nav class="mt-2">
+                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                        
+                        <li class="nav-item">
+                            <a asp-controller="Home" asp-action="Index" class="nav-link @(currentController == "Home" ? "active" : "")">
+                                <i class="nav-icon fas fa-tachometer-alt"></i>
+                                <p>Dashboard</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-header">MÓDULOS</li>
+
+                        <!-- Segurança -->
+                        <li class="nav-item">
+                            <a href="#" class="nav-link @(currentController == "Collaborator" || currentController == "Role" || currentController == "Permission" ? "active" : "")">
+                                <i class="nav-icon fas fa-shield-alt"></i>
+                                <p>
+                                    Segurança
+                                    <i class="right fas fa-angle-left"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a asp-controller="Collaborator" asp-action="Index" class="nav-link @(currentController == "Collaborator" ? "active" : "")">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Colaboradores</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Role" asp-action="Index" class="nav-link @(currentController == "Role" ? "active" : "")">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Perfis de Acesso</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Permission" asp-action="Index" class="nav-link @(currentController == "Permission" ? "active" : "")">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Matriz de Permissões</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <!-- Qualidade -->
+                        <li class="nav-item">
+                            <a href="#" class="nav-link @(currentController == "Incident" ? "active" : "")">
+                                <i class="nav-icon fas fa-check-circle"></i>
+                                <p>
+                                    Qualidade
+                                    <i class="right fas fa-angle-left"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a asp-controller="Incident" asp-action="ExternalIndex" class="nav-link @(currentAction == "ExternalIndex" ? "active" : "")">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Ocorrências Externas</p>
+                                    </a>
+                                </li>
+                            </ul>
+                                                        <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a asp-controller="Incident" asp-action="Create" class="nav-link @(currentAction == "Create" ? "active" : "")">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Ocorrência Interna</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Report" asp-action="Index" class="nav-link @(currentController == "Report" ? "active" : "")">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Relatórios</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <!-- Legalização -->
+                        <li class="nav-item">
+                            <a href="#" class="nav-link @(currentController == "Establishment" || currentController == "Brand" || currentController == "EstablishmentType" || currentController == "DocumentType" ? "active" : "")">
+                                <i class="nav-icon fas fa-building"></i>
+                                <p>
+                                    Gestão de Legalização
+                                    <i class="right fas fa-angle-left"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a asp-controller="Establishment" asp-action="Index" class="nav-link @(currentController == "Establishment" ? "active" : "")">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Estabelecimentos</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Brand" asp-action="Index" class="nav-link @(currentController == "Brand" ? "active" : "")">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Marcas</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="EstablishmentType" asp-action="Index" class="nav-link @(currentController == "EstablishmentType" ? "active" : "")">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Tipos de Estabelecimento</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="DocumentType" asp-action="Index" class="nav-link @(currentController == "DocumentType" ? "active" : "")">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Tipos de Documentos</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="DocumentRenewalLog" asp-action="Index" class="nav-link @(currentController == "DocumentRenewalLog" ? "active" : "")">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Histórico de Renovações</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Report" asp-action="Legalization" class="nav-link @(currentAction == "Legalization" ? "active" : "")">
+                                        <i class="far fa-chart-bar nav-icon"></i>
+                                        <p>Relatórios</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <!-- Cadastros Gerais -->
+                        <li class="nav-item">
+                            <a href="#" class="nav-link @(currentController == "Specialization" ? "active" : "")">
+                                <i class="nav-icon fas fa-cogs"></i>
+                                <p>
+                                    Cadastros Gerais
+                                    <i class="right fas fa-angle-left"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a asp-controller="Specialization" asp-action="Index" class="nav-link @(currentController == "Specialization" ? "active" : "")">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Especializações</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+
+                    </ul>
+                </nav>
+                <!-- /.sidebar-menu -->
+            </div>
+            <!-- /.sidebar -->
+        </aside>
+
+        <!-- Content Wrapper. Contains page content -->
+        <div class="content-wrapper">
+            <!-- Content Header (Page header) -->
+            <div class="content-header">
+                <div class="container-fluid">
+                    <div class="row mb-2">
+                        <div class="col-sm-6">
+                            <h1 class="m-0">@ViewData["Title"]</h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.content-header -->
+
+            <!-- Main content -->
+            <div class="content">
+                <div class="container-fluid">
+                    @RenderBody()
+                </div>
+            </div>
+            <!-- /.content -->
+        </div>
+        <!-- /.content-wrapper -->
+
+        <!-- Main Footer -->
+        <footer class="main-footer">
+            <div class="float-right d-none d-sm-inline">
+                Versão 1.0
+            </div>
+            <strong>Copyright &copy; @DateTime.Now.Year <a href="#">SINAI</a>.</strong> Todos os direitos reservados.
+        </footer>
+    </div>
+    <!-- ./wrapper -->
+
+    <!-- REQUIRED SCRIPTS -->
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap 4 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- AdminLTE App -->
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+    <!-- Intro.js -->
+    <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
+    <!-- jQuery Mask Plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <!-- Toastr JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <!-- Utils (Validações e CEP) -->
+    <script src="~/js/utils.js" asp-append-version="true"></script>
+
+    <script>
+        function startTour() {
+            introJs().setOptions({
+                steps: [
+                    {
+                        intro: "Bem-vindo ao <b>SQ CDT SINAI</b>! Vamos fazer um tour rápido pelas principais funcionalidades?"
+                    },
+                    {
+                        element: '.main-sidebar',
+                        intro: "Aqui fica o <b>Menu Principal</b>. Navegue entre os módulos de Qualidade, Legalização e Segurança.",
+                        position: 'right'
+                    },
+                    {
+                        element: '.navbar-nav.ml-auto',
+                        intro: "Nesta barra superior, você pode acessar a <b>Ajuda</b>, iniciar este <b>Tour</b> novamente ou <b>Sair</b> do sistema.",
+                        position: 'left'
+                    },
+                    {
+                        element: '.content-wrapper',
+                        intro: "Esta é a área principal onde as informações, gráficos e formulários serão exibidos.",
+                        position: 'top'
+                    }
+                ],
+                nextLabel: 'Próximo',
+                prevLabel: 'Anterior',
+                doneLabel: 'Pronto',
+                showStepNumbers: true
+            }).start();
+        }
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

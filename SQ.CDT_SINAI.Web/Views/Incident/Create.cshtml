@@ -1,0 +1,101 @@
+@model SQ.CDT_SINAI.Shared.DTOs.CreateInternalIncidentDto
+@using SQ.CDT_SINAI.Shared.Models
+
+@{
+    ViewData["Title"] = "Nova Ocorrência Interna";
+}
+
+<div class="container mt-5">
+    <div class="card card-danger">
+        <div class="card-header">
+            <h3 class="card-title">Registrar Ocorrência Interna</h3>
+        </div>
+        <form asp-action="Create" method="post">
+            <div class="card-body">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label>Tipo de Ocorrência</label>
+                        <select asp-for="Category" class="form-control">
+                            <option value="">Selecione...</option>
+                            <option value="@IncidentCategory.InternalCompliment">Elogio Interno</option>
+                            <option value="@IncidentCategory.InternalComplaint">Reclamação Interna</option>
+                            <option value="@IncidentCategory.InternalSuggestion">Sugestão Interna</option>
+                            <option value="@IncidentCategory.InternalRequest">Solicitação Interna</option>
+                        </select>
+                        <span asp-validation-for="Category" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label>Gravidade</label>
+                        <select asp-for="Severity" class="form-control" asp-items="Html.GetEnumSelectList<SQ.CDT_SINAI.Shared.Models.IncidentSeverity>()"></select>
+                        <span asp-validation-for="Severity" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label>Área Envolvida</label>
+                        <input asp-for="InvolvedArea" class="form-control" />
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label>Local/Unidade</label>
+                        <input asp-for="LocationOrUnit" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 form-group">
+                        <label>Área Destinatária *</label>
+                        <input asp-for="TargetArea" class="form-control" required />
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label>Regional Envolvida *</label>
+                        <input asp-for="InvolvedRegional" class="form-control" required />
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label>Marca Envolvida *</label>
+                        <input asp-for="InvolvedBrand" class="form-control" required />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 form-group">
+                        <label>Nome do Cliente</label>
+                        <input asp-for="ClientName" class="form-control" />
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label>Nº de Protocolo</label>
+                        <input asp-for="ProtocolNumber" class="form-control" />
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label>CPF</label>
+                        <input asp-for="ClientCpf" class="form-control mask-cpf" placeholder="000.000.000-00" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Colaborador Alvo (Quem receberá a ocorrência)</label>
+                    <select asp-for="TargetId" class="form-control" asp-items="@(new SelectList(ViewBag.Collaborators, "Id", "Name"))">
+                        <option value="">Selecione...</option>
+                    </select>
+                    <span asp-validation-for="TargetId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label>Descrição do Fato</label>
+                    <textarea asp-for="Description" class="form-control" rows="5" placeholder="Descreva detalhadamente o ocorrido..."></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-danger">Registrar Ocorrência</button>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

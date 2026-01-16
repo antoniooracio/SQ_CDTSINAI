@@ -1,0 +1,74 @@
+@model string
+@{
+    ViewData["Title"] = "Manual do Usuário";
+}
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-info">
+            <h3 class="card-title"><i class="fas fa-book mr-2"></i> Manual do Usuário</h3>
+            <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="maximize">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="markdown-content">
+                @Html.Raw(Model)
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos simples para melhorar a leitura do Markdown */
+    .markdown-content img {
+        max-width: 100%;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin: 10px 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .markdown-content h1, .markdown-content h2 {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+        margin-top: 20px;
+    }
+    .markdown-content blockquote {
+        border-left: 4px solid #17a2b8;
+        padding-left: 15px;
+        color: #666;
+        background-color: #f8f9fa;
+        padding: 10px;
+    }
+    /* Estilo para o diagrama */
+    .mermaid {
+        text-align: center;
+        margin: 20px 0;
+    }
+</style>
+
+<!-- Mermaid.js para diagramas -->
+<script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    
+    // Inicializa o Mermaid
+    mermaid.initialize({ startOnLoad: false });
+
+    // Procura blocos de código 'mermaid' gerados pelo Markdown e converte para div
+    document.addEventListener("DOMContentLoaded", async function () {
+        const mermaidBlocks = document.querySelectorAll('pre code.language-mermaid');
+        
+        for (const block of mermaidBlocks) {
+            const pre = block.parentElement;
+            const div = document.createElement('div');
+            div.className = 'mermaid';
+            div.textContent = block.innerText; // Pega o código do diagrama
+            pre.replaceWith(div); // Substitui o <pre><code> pelo <div>
+        }
+
+        // Renderiza os diagramas
+        await mermaid.run();
+    });
+</script>

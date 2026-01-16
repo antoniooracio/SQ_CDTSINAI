@@ -1,0 +1,37 @@
+@model SQ.CDT_SINAI.Shared.Models.DocumentType
+
+@{
+    ViewData["Title"] = "Editar Tipo de Documento";
+}
+
+<div class="container mt-5">
+    <h2>Editar Tipo de Documento</h2>
+    <form asp-action="Edit" method="post">
+        <input type="hidden" asp-for="Id" />
+        
+        <div class="form-group">
+            <label>Nome do Documento</label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label>Área Responsável</label>
+            <input asp-for="ResponsibleArea" class="form-control" />
+        </div>
+        <div class="form-check mt-3">
+            <input asp-for="IsCompliance" class="form-check-input" />
+            <label class="form-check-label" asp-for="IsCompliance">É Documento de Compliance?</label>
+        </div>
+        <div class="form-check mt-3">
+            <input asp-for="Active" class="form-check-input" />
+            <label class="form-check-label" asp-for="Active">Ativo</label>
+        </div>
+
+        <button type="submit" class="btn btn-success mt-3">Salvar</button>
+        <a asp-action="Index" class="btn btn-secondary mt-3">Voltar</a>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

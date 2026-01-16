@@ -1,0 +1,194 @@
+@model List<SQ.CDT_SINAI.Shared.DTOs.PermissionMatrixDto>
+@{
+    ViewData["Title"] = "Matriz de Permissões";
+    var systemPermissions = ViewBag.SystemPermissions as List<(string Module, string Action, string Label)>;
+}
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Matriz de Permissões</h2>
+        <div>
+            <button type="button" class="btn btn-info mr-2" data-toggle="modal" data-target="#modalCopy">
+                <i class="fas fa-copy"></i> Copiar Permissões
+            </button>
+            <a asp-controller="Role" asp-action="Index" class="btn btn-secondary">
+                <i class="fas fa-id-badge"></i> Gerenciar Perfis
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-light">
+            <h3 class="card-title"><i class="fas fa-user-lock mr-1"></i> Controle de Acesso</h3>
+        </div>
+        <div class="card-body table-responsive p-0">
+            <table class="table table-bordered table-hover text-center mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th class="text-left align-middle" style="width: 30%;">Permissão / Módulo</th>
+                        @foreach (var role in Model)
+                        {
+                            <th class="align-middle">
+                                @role.RoleName
+                                @if(role.RoleName != "Administrador") 
+                                {
+                                    <div class="custom-control custom-checkbox mt-1">
+                                        <input type="checkbox" class="custom-control-input select-all-role" id="selectAll_@role.RoleId" data-role-id="@role.RoleId">
+                                        <label class="custom-control-label font-weight-normal" for="selectAll_@role.RoleId"><small>Selecionar Todos</small></label>
+                                    </div>
+                                }
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var perm in systemPermissions)
+                    {
+                        <tr>
+                            <td class="text-left font-weight-bold">@perm.Label</td>
+                            @foreach (var role in Model)
+                            {
+                                var isChecked = role.Permissions.Contains($"{perm.Module}.{perm.Action}");
+                                var isAdmin = role.RoleName == "Administrador";
+                                
+                                <td>
+                                    @if (isAdmin)
+                                    {
+                                        <i class="fas fa-check-circle text-success fa-lg" title="Acesso Total (Administrador)"></i>
+                                    }
+                                    else
+                                    {
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input perm-check role-@role.RoleId" 
+                                                   id="perm_@role.RoleId@perm.Module@perm.Action" 
+                                                   value="@($"{perm.Module}.{perm.Action}")"
+                                                   @(isChecked ? "checked" : "")>
+                                            <label class="custom-control-label" for="perm_@role.RoleId@perm.Module@perm.Action"></label>
+                                        </div>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+                <tfoot class="bg-light">
+                    <tr>
+                        <td class="text-right align-middle text-muted font-italic">
+                            Salve as alterações por coluna &rarr;
+                        </td>
+                        @foreach (var role in Model)
+                        {
+                            <td>
+                                @if(role.RoleName != "Administrador") 
+                                {
+                                    <button type="button" class="btn btn-primary btn-sm btn-block btn-save-role" data-role-id="@role.RoleId">
+                                        <i class="fas fa-save"></i> Salvar
+                                    </button>
+                                }
+                            </td>
+                        }
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    <small class="text-muted">* Clique no botão para alternar a permissão (Ativar/Desativar).</small>
+</div>
+
+<!-- Modal Copiar Permissões -->
+<div class="modal fade" id="modalCopy" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title">Copiar Permissões</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form asp-action="Copy" method="post">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Perfil de Origem (Copiar de)</label>
+                        <select name="sourceRoleId" class="form-control" required>
+                            <option value="">Selecione...</option>
+                            @foreach (var role in Model)
+                            {
+                                <option value="@role.RoleId">@role.RoleName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Perfil de Destino (Colar em)</label>
+                        <select name="targetRoleId" class="form-control" required>
+                            <option value="">Selecione...</option>
+                            @foreach (var role in Model)
+                            {
+                                <option value="@role.RoleId">@role.RoleName</option>
+                            }
+                        </select>
+                        <small class="text-danger font-weight-bold"><i class="fas fa-exclamation-triangle"></i> Atenção: Todas as permissões atuais do perfil de destino serão substituídas.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Copiar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Adicionando Toastr para notificações bonitas -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Lógica do "Selecionar Todos"
+            $('.select-all-role').change(function() {
+                var roleId = $(this).data('role-id');
+                var isChecked = $(this).is(':checked');
+                // Marca/Desmarca todos os checkboxes que tenham a classe role-{id}
+                $('.role-' + roleId).prop('checked', isChecked);
+            });
+
+            // Lógica do Botão Salvar (AJAX)
+            $('.btn-save-role').click(function() {
+                var roleId = $(this).data('role-id');
+                var permissions = [];
+                
+                // Coleta todos os checkboxes marcados para este perfil
+                $('.role-' + roleId + ':checked').each(function() {
+                    permissions.push($(this).val());
+                });
+
+                var btn = $(this);
+                var originalText = btn.html();
+                
+                // Feedback visual de carregamento
+                btn.html('<i class="fas fa-spinner fa-spin"></i> Salvando...').prop('disabled', true);
+
+                $.ajax({
+                    url: '@Url.Action("Update", "Permission")',
+                    type: 'POST',
+                    traditional: true, // Importante para enviar arrays corretamente no ASP.NET Core
+                    data: {
+                        RoleId: roleId,
+                        Permissions: permissions
+                    },
+                    success: function() {
+                        toastr.success('Permissões atualizadas com sucesso!');
+                    },
+                    error: function() {
+                        toastr.error('Erro ao salvar permissões. Tente novamente.');
+                    },
+                    complete: function() {
+                        // Restaura o botão
+                        btn.html(originalText).prop('disabled', false);
+                    }
+                });
+            });
+        });
+    </script>
+}

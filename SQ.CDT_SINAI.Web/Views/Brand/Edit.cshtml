@@ -1,0 +1,25 @@
+@model SQ.CDT_SINAI.Shared.Models.Brand
+
+@{
+    ViewData["Title"] = "Editar Marca";
+}
+
+<div class="container mt-5">
+    <h2>Editar Marca</h2>
+    <form asp-action="Edit" method="post">
+        <input type="hidden" asp-for="Id" />
+        
+        <div class="form-group">
+            <label>Nome da Marca</label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-success mt-3">Salvar</button>
+        <a asp-action="Index" class="btn btn-secondary mt-3">Voltar</a>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

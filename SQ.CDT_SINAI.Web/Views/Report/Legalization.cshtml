@@ -1,0 +1,162 @@
+@model SQ.CDT_SINAI.Web.Models.ViewModels.LegalizationReportViewModel
+@using SQ.CDT_SINAI.Shared.Models
+
+@{
+    ViewData["Title"] = "Relatório de Documentos Legais";
+}
+<!-- Select2 CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css" />
+
+<section class="content-header">
+    <div class="container-fluid">
+        <h1>Relatório de Documentos Legais</h1>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-filter mr-1"></i> Filtros</h3>
+            </div>
+            <form asp-action="Legalization" method="post">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Estabelecimento</label>
+                            <select asp-for="Filter.EstablishmentIds" class="form-control select2" multiple="multiple" asp-items="@(new SelectList(ViewBag.Establishments, "Id", "Name"))" style="width: 100%;">
+                            </select>
+                            <small class="text-muted">Deixe vazio para selecionar todos.</small>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Marca</label>
+                            <select asp-for="Filter.BrandIds" class="form-control select2" multiple="multiple" asp-items="@(new SelectList(ViewBag.Brands, "Id", "Name"))" style="width: 100%;">
+                            </select>
+                            <small class="text-muted">Deixe vazio para selecionar todas.</small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 form-group">
+                            <label>Regional</label>
+                            <input asp-for="Filter.Regional" class="form-control" placeholder="Ex: SP, RJ" />
+                        </div>
+                        <div class="col-md-5 form-group">
+                            <label>Tipos de Site</label>
+                            <select asp-for="Filter.ServiceLocationTypes" class="form-control select2" multiple="multiple" asp-items="Html.GetEnumSelectList<ServiceLocationType>()" style="width: 100%;"></select>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Status do Documento</label>
+                            <select asp-for="Filter.Statuses" class="form-control select2" multiple="multiple" asp-items="Html.GetEnumSelectList<DocumentStatus>()" style="width: 100%;"></select>
+                        </div>
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="Filter.ComplianceOnly" class="form-check-input" />
+                        <label class="form-check-label" asp-for="Filter.ComplianceOnly">Apenas Compliance (Documentos Obrigatórios)</label>
+                    </div>
+                </div>
+                <div class="card-footer text-right">
+                    <button type="submit" class="btn btn-success"><i class="fas fa-chart-bar mr-1"></i> Gerar Gráficos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+@if (Model.Result != null)
+{
+    <section class="content">
+        <div class="container-fluid">
+            
+            @if (Model.Result.DocumentsByArea.Labels.Count == 0)
+            {
+                <div class="alert alert-warning">
+                    <h5><i class="icon fas fa-exclamation-triangle"></i> Atenção!</h5>
+                    Nenhum dado encontrado para os filtros selecionados.<br>
+                    <b>Estabelecimentos encontrados:</b> @Model.Result.TotalEstablishmentsFound <br><br>
+                    Verifique se:
+                    <ul>
+                        <li>Os estabelecimentos possuem <b>Tipos de Estabelecimento</b> vinculados.</li>
+                        <li>Esses tipos possuem <b>Documentos Necessários</b> configurados.</li>
+                        @if (Model.Filter.ComplianceOnly) { <li><b>Você marcou "Apenas Compliance", mas talvez seus Tipos de Documento não estejam marcados como Compliance no cadastro.</b></li> }
+                        @if (Model.Filter.Statuses?.Count > 0) { <li>Nenhum documento encontrado com os status selecionados.</li> }
+                    </ul>
+                </div>
+            }
+            else
+            {
+            <div class="row">
+                <div class="col-12">
+                    <div class="card card-primary card-outline">
+                        <div class="card-header">
+                            <h3 class="card-title">Distribuição de Documentos por Área Responsável</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="areaChart" style="min-height: 400px; height: 400px; max-height: 400px; max-width: 100%;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card card-info card-outline">
+                        <div class="card-header">
+                            <h3 class="card-title">Distribuição de Documentos por Tipo</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="typeChart" style="min-height: 800px; height: 800px; max-height: 1200px; max-width: 100%;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            }
+
+        </div>
+    </section>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.full.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.select2').select2({ theme: "bootstrap", placeholder: "Selecione...", allowClear: true });
+        });
+
+        @if (Model.Result != null && Model.Result.DocumentsByArea.Labels.Count > 0)
+        {
+            <text>
+            function createStackedChart(id, chartData, orientation) {
+                var ctx = document.getElementById(id).getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartData.Labels,
+                        datasets: chartData.Datasets.map(ds => ({
+                            label: ds.Label,
+                            data: ds.Data,
+                            backgroundColor: ds.BackgroundColor
+                        }))
+                    },
+                    options: {
+                        indexAxis: orientation,
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { x: { stacked: true }, y: { stacked: true } },
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+
+            $(function () {
+                var areaData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Result.DocumentsByArea));
+                createStackedChart('areaChart', areaData, 'x');
+
+                var typeData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Result.DocumentsByType));
+                createStackedChart('typeChart', typeData, 'y');
+            });
+            </text>
+        }
+    </script>
+}

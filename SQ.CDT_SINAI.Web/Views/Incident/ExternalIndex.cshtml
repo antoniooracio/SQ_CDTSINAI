@@ -1,0 +1,269 @@
+@model SQ.CDT_SINAI.Shared.DTOs.PaginatedResult<SQ.CDT_SINAI.Shared.Models.Incident>
+@using SQ.CDT_SINAI.Shared.Models
+
+@{
+    ViewData["Title"] = "Ocorrências Externas";
+    var currentStatus = ViewData["Status"] as SQ.CDT_SINAI.Shared.Models.IncidentStatus?;
+}
+
+<div class="container-fluid mt-3">
+    <div class="card card-primary card-outline">
+        <div class="card-header">
+            <h3 class="card-title">Gestão de Ocorrências Externas</h3>
+            
+            <div class="card-tools">
+                <form method="get" class="form-inline">
+                    <select name="status" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
+                        <option value="">Todos os Status</option>
+                        <option value="0" selected="@(currentStatus == SQ.CDT_SINAI.Shared.Models.IncidentStatus.Open)">Abertas</option>
+                        <option value="1" selected="@(currentStatus == SQ.CDT_SINAI.Shared.Models.IncidentStatus.Responded)">Respondidas</option>
+                    </select>
+                    
+                    <input type="date" name="startDate" class="form-control form-control-sm mr-1" value="@ViewData["StartDate"]" />
+                    <input type="date" name="endDate" class="form-control form-control-sm mr-1" value="@ViewData["EndDate"]" />
+                    <input type="text" name="search" class="form-control form-control-sm mr-1" value="@ViewData["Search"]" placeholder="Buscar Cliente/Protocolo" />
+                    
+                    <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-search"></i></button>
+                    
+                    <button type="button" class="btn btn-sm btn-success ml-2" data-toggle="modal" data-target="#modal-external-incident">
+                        <i class="fas fa-plus"></i> Nova Ocorrência Externa
+                    </button>
+                </form>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-striped projects">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Relator</th>
+                        <th>Descrição</th>
+                        <th>Destino Solicitado</th>
+                        <th>Atribuído Para</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items.Any())
+                    {
+                        foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    @item.ReporterName
+                                    <br/>
+                                    <small>@item.ReporterContact</small>
+                                </td>
+                                <td>
+                                    <span title="@item.Description">
+                                        @item.Description.Substring(0, Math.Min(item.Description.Length, 40))...
+                                    </span>
+                                </td>
+                                <td>@item.TargetAreaOrProfessional</td>
+                                <td>
+                                    @if(item.Target != null)
+                                    {
+                                        <span class="badge badge-info">@item.Target.Name</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-secondary">Não atribuído</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if(item.Status == SQ.CDT_SINAI.Shared.Models.IncidentStatus.Open)
+                                    {
+                                        <span class="badge badge-warning">Aberta</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-success">Respondida</span>
+                                    }
+                                </td>
+                                <td class="project-actions text-right">
+                                    <a asp-action="Assign" asp-route-id="@item.Id" class="btn btn-info btn-sm">
+                                        <i class="fas fa-user-edit"></i> Atribuir
+                                    </a>
+                                    <a asp-action="Respond" asp-route-id="@item.Id" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-reply"></i> Responder
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Nenhuma ocorrência encontrada.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+        @if (Model.TotalPages > 1)
+        {
+            <div class="card-footer clearfix">
+                <ul class="pagination pagination-sm m-0 float-right">
+                    <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                        <a class="page-link" asp-action="ExternalIndex" asp-route-page="@(Model.PageNumber - 1)" asp-route-status="@ViewData["Status"]" asp-route-startDate="@ViewData["StartDate"]" asp-route-endDate="@ViewData["EndDate"]" asp-route-search="@ViewData["Search"]">&laquo;</a>
+                    </li>
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                            <a class="page-link" asp-action="ExternalIndex" asp-route-page="@i" asp-route-status="@ViewData["Status"]" asp-route-startDate="@ViewData["StartDate"]" asp-route-endDate="@ViewData["EndDate"]" asp-route-search="@ViewData["Search"]">@i</a>
+                        </li>
+                    }
+                    <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                        <a class="page-link" asp-action="ExternalIndex" asp-route-page="@(Model.PageNumber + 1)" asp-route-status="@ViewData["Status"]" asp-route-startDate="@ViewData["StartDate"]" asp-route-endDate="@ViewData["EndDate"]" asp-route-search="@ViewData["Search"]">&raquo;</a>
+                    </li>
+                </ul>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal Nova Ocorrência Externa -->
+<div class="modal fade" id="modal-external-incident" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success">
+                <h5 class="modal-title">Nova Ocorrência Externa</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formExternalIncident">
+                    <h6 class="text-primary border-bottom pb-2">Dados da Ocorrência</h6>
+                    <div class="row">
+                        <div class="col-md-4 form-group">
+                            <label>Tipo de Cliente *</label>
+                            <select id="extClientType" class="form-control" asp-items="Html.GetEnumSelectList<ClientType>()"></select>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Meio de Contato *</label>
+                            <select id="extContactMethod" class="form-control" asp-items="Html.GetEnumSelectList<ContactMethod>()"></select>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Tipo de Ocorrência *</label>
+                            <select id="extCategory" class="form-control" asp-items="Html.GetEnumSelectList<IncidentCategory>()"></select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Para quem? (Área/Profissional) *</label>
+                            <input type="text" id="extTarget" class="form-control" required />
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Gravidade *</label>
+                            <select id="extSeverity" class="form-control" asp-items="Html.GetEnumSelectList<IncidentSeverity>()"></select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Descrição *</label>
+                        <textarea id="extDescription" class="form-control" rows="3" required></textarea>
+                    </div>
+
+                    <h6 class="text-primary border-bottom pb-2 mt-3">Dados do Cliente</h6>
+                    <div class="row">
+                        <div class="col-md-4 form-group"><label>Nº Protocolo</label><input type="text" id="extProtocol" class="form-control" /></div>
+                        <div class="col-md-4 form-group"><label>CPF</label><input type="text" id="extCpf" class="form-control mask-cpf" placeholder="000.000.000-00" /></div>
+                        <div class="col-md-4 form-group"><label>CIP</label><input type="text" id="extCip" class="form-control" /></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group"><label>Nome do Cliente *</label><input type="text" id="extClientName" class="form-control" required /></div>
+                        <div class="col-md-6 form-group"><label>Convênio Médico</label><input type="text" id="extInsurance" class="form-control" /></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group"><label>Telefone</label><input type="text" id="extPhone" class="form-control mask-phone" placeholder="(00) 00000-0000" /></div>
+                        <div class="col-md-6 form-group"><label>E-mail</label><input type="text" id="extEmail" class="form-control" /></div>
+                    </div>
+                    <div class="form-group"><label>Endereço</label><input type="text" id="extAddress" class="form-control" /></div>
+                    <div class="row">
+                        <div class="col-md-8 form-group"><label>Contato Secundário (Paciente)</label><input type="text" id="extSecContact" class="form-control" /></div>
+                        <div class="col-md-4 form-group"><label>Data Nascimento</label><input type="date" id="extBirthDate" class="form-control" /></div>
+                    </div>
+
+                    <h6 class="text-primary border-bottom pb-2 mt-3">Dados do Médico (Se aplicável)</h6>
+                    <div class="row">
+                        <div class="col-md-4 form-group"><label>CRM</label><input type="text" id="extCrm" class="form-control" /></div>
+                        <div class="col-md-8 form-group"><label>Regional</label><input type="text" id="extRegional" class="form-control" /></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group"><label>Nome do Médico</label><input type="text" id="extDocName" class="form-control" /></div>
+                        <div class="col-md-6 form-group"><label>E-mail do Médico</label><input type="text" id="extDocEmail" class="form-control" /></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group"><label>Telefone Médico 1</label><input type="text" id="extDocPhone1" class="form-control mask-phone" placeholder="(00) 00000-0000" /></div>
+                        <div class="col-md-6 form-group"><label>Telefone Médico 2</label><input type="text" id="extDocPhone2" class="form-control mask-phone" placeholder="(00) 00000-0000" /></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="saveExternalIncident()">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function saveExternalIncident() {
+            var data = {
+                clientType: parseInt($('#extClientType').val()),
+                contactMethod: parseInt($('#extContactMethod').val()),
+                category: parseInt($('#extCategory').val()),
+                targetAreaOrProfessional: $('#extTarget').val(),
+                severity: parseInt($('#extSeverity').val()),
+                description: $('#extDescription').val(),
+                
+                protocolNumber: $('#extProtocol').val(),
+                clientCpf: $('#extCpf').val(),
+                cip: $('#extCip').val(),
+                clientName: $('#extClientName').val(),
+                healthInsurance: $('#extInsurance').val(),
+                clientPhone: $('#extPhone').val(),
+                clientEmail: $('#extEmail').val(),
+                clientAddress: $('#extAddress').val(),
+                secondaryContactName: $('#extSecContact').val(),
+                clientBirthDate: $('#extBirthDate').val() ? $('#extBirthDate').val() : null,
+                
+                doctorCrm: $('#extCrm').val(),
+                involvedRegional: $('#extRegional').val(),
+                doctorName: $('#extDocName').val(),
+                doctorEmail: $('#extDocEmail').val(),
+                doctorPhone1: $('#extDocPhone1').val(),
+                doctorPhone2: $('#extDocPhone2').val()
+            };
+
+            if (!data.targetAreaOrProfessional || !data.description || !data.clientName) {
+                alert("Preencha os campos obrigatórios (*).");
+                return;
+            }
+
+            var cpf = $('#extCpf').val();
+            if (cpf && !validarCPF(cpf)) {
+                alert("CPF inválido. Verifique os números digitados.");
+                return;
+            }
+
+            $.ajax({
+                url: 'http://localhost:5001/api/incident/external',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(res) {
+                    alert(res.message);
+                    location.reload();
+                },
+                error: function(err) {
+                    alert("Erro ao salvar: " + (err.responseJSON ? err.responseJSON.title : err.statusText));
+                }
+            });
+        }
+    </script>
+}

@@ -1,0 +1,45 @@
+@model SQ.CDT_SINAI.Shared.Models.Incident
+
+@{
+    ViewData["Title"] = "Atribuir Ocorrência";
+}
+
+<div class="container mt-5">
+    <div class="card card-info">
+        <div class="card-header">
+            <h3 class="card-title">Atribuir Ocorrência #@Model.Id</h3>
+        </div>
+        <form asp-action="Assign" method="post">
+            <input type="hidden" name="id" value="@Model.Id" />
+            
+            <div class="card-body">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="callout callout-warning">
+                    <h5>Solicitação Original</h5>
+                    <p><strong>Relator:</strong> @Model.ReporterName (@Model.ReporterContact)</p>
+                    <p><strong>Destino Solicitado:</strong> @Model.TargetAreaOrProfessional</p>
+                    <p><strong>Descrição:</strong> @Model.Description</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Selecione o Colaborador Responsável</label>
+                    <select name="targetId" class="form-control select2" required>
+                        <option value="">Selecione...</option>
+                        @foreach (var item in ViewBag.Collaborators)
+                        {
+                            <!option value="@item.Id" @(Model.TargetId == item.Id ? "selected" : "")>@item.Name - @item.JobTitle</!option>
+                        }
+                    </select>
+                    <small class="form-text text-muted">
+                        Ao atribuir, esta ocorrência aparecerá no Dashboard do colaborador selecionado.
+                    </small>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-info">Salvar Atribuição</button>
+                <a asp-action="ExternalIndex" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,148 @@
+@model SQ.CDT_SINAI.Shared.DTOs.UpdateCollaboratorDto
+@{
+    ViewData["Title"] = "Editar Colaborador";
+}
+
+<div class="container mt-5">
+    <h2>Editar Colaborador</h2>
+    <form asp-action="Edit" method="post">
+        <input type="hidden" asp-for="Id" />
+        
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label>Nome</label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 form-group">
+                <label>Email</label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label>CPF</label>
+                <input asp-for="Cpf" class="form-control mask-cpf" placeholder="000.000.000-00" />
+                <span asp-validation-for="Cpf" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 form-group">
+                <label>RG</label>
+                <input asp-for="Rg" class="form-control" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label>Data de Nascimento</label>
+                <input asp-for="BirthDate" type="date" class="form-control" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label>Telefone</label>
+                <input asp-for="PhoneNumber" class="form-control mask-phone" placeholder="(00) 00000-0000" />
+            </div>
+            <div class="col-md-6 form-group">
+                <label>CEP</label>
+                <input asp-for="AddressZipCode" class="form-control mask-cep" placeholder="00000-000" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label>Rua</label>
+                <input asp-for="AddressStreet" class="form-control" />
+            </div>
+            <div class="col-md-4 form-group">
+                <label>Bairro</label>
+                <input asp-for="AddressNeighborhood" class="form-control" />
+            </div>
+            <div class="col-md-2 form-group">
+                <label>Número</label>
+                <input asp-for="AddressNumber" class="form-control" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label>Cidade</label>
+                <input asp-for="AddressCity" class="form-control" readonly />
+            </div>
+            <div class="col-md-6 form-group">
+                <label>Estado</label>
+                <input asp-for="AddressState" class="form-control" readonly />
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-md-4 form-group">
+                <label>Cargo</label>
+                <input asp-for="JobTitle" class="form-control" />
+            </div>
+            <div class="col-md-4 form-group">
+                <label>Registro Profissional</label>
+                <input asp-for="ProfessionalLicense" class="form-control" />
+            </div>
+            <div class="col-md-4 form-group">
+                <label>Data de Admissão</label>
+                <input asp-for="AdmissionDate" type="date" class="form-control" />
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-md-6 form-group">
+                <label>Perfil de Acesso</label>
+                <select asp-for="RoleId" class="form-control">
+                    <option value="">Selecione um perfil...</option>
+                    @if (ViewBag.Roles != null)
+                    {
+                        foreach (var item in ViewBag.Roles)
+                        {
+                            <option value="@item.Id">@item.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-6 form-group">
+                <label>Estabelecimentos Vinculados</label>
+                <select asp-for="EstablishmentIds" class="form-control" multiple size="5">
+                    @if (ViewBag.Establishments != null)
+                    {
+                        foreach (var item in ViewBag.Establishments)
+                        {
+                            <option value="@item.Id">@item.Name</option>
+                        }
+                    }
+                </select>
+                <small class="form-text text-muted">Segure Ctrl (ou Cmd) para selecionar múltiplos.</small>
+            </div>
+        </div>
+
+        <div class="form-group mt-3">
+            <label>Especializações</label>
+            <select asp-for="SpecializationIds" class="form-control" multiple>
+                @if (ViewBag.Specializations != null)
+                {
+                    foreach (var item in ViewBag.Specializations)
+                    {
+                        <option value="@item.Id">@item.Name</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="form-check mt-3">
+            <input asp-for="Active" class="form-check-input" />
+            <label class="form-check-label" asp-for="Active">Ativo</label>
+        </div>
+
+        <button type="submit" class="btn btn-success mt-3">Salvar</button>
+        <a asp-action="Index" class="btn btn-secondary mt-3">Voltar</a>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,111 @@
+@model SQ.CDT_SINAI.Shared.DTOs.LegalizationReportResultDto
+@{
+    ViewData["Title"] = "Gráficos de Legalização";
+}
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Documentos Legais</h1>
+            </div>
+            <div class="col-sm-6 text-right">
+                <button onclick="window.print()" class="btn btn-default"><i class="fas fa-print"></i> Imprimir</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container-fluid">
+        
+        @if (Model.DocumentsByArea.Labels.Count == 0)
+        {
+            <div class="alert alert-warning">
+                <h5><i class="icon fas fa-exclamation-triangle"></i> Atenção!</h5>
+                Nenhum dado encontrado para os filtros selecionados.<br>
+                <b>Estabelecimentos encontrados:</b> @Model.TotalEstablishmentsFound <br><br>
+                Verifique se:
+                <ul>
+                    <li>Os estabelecimentos possuem <b>Tipos de Estabelecimento</b> vinculados.</li>
+                    <li>Esses tipos possuem <b>Documentos Necessários</b> configurados.</li>
+                    @if (ViewBag.Filter?.ComplianceOnly == true) { <li><b>Você marcou "Apenas Compliance", mas talvez seus Tipos de Documento não estejam marcados como Compliance no cadastro.</b></li> }
+                    @if (ViewBag.Filter?.Statuses?.Count > 0) { <li>Nenhum documento encontrado com os status selecionados.</li> }
+                </ul>
+            </div>
+        }
+        else
+        {
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-primary card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">Distribuição de Documentos por Área Responsável</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="areaChart" style="min-height: 400px; height: 400px; max-height: 400px; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-info card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">Distribuição de Documentos por Tipo</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="typeChart" style="min-height: 800px; height: 800px; max-height: 1200px; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+
+    </div>
+</section>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function createStackedChart(id, chartData, orientation) {
+            var ctx = document.getElementById(id).getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.Labels,
+                    datasets: chartData.Datasets.map(ds => ({
+                        label: ds.Label,
+                        data: ds.Data,
+                        backgroundColor: ds.BackgroundColor
+                    }))
+                },
+                options: {
+                    indexAxis: orientation, // 'x' or 'y'
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    }
+                }
+            });
+        }
+
+        $(function () {
+            var areaData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DocumentsByArea));
+            createStackedChart('areaChart', areaData, 'x');
+
+            var typeData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DocumentsByType));
+            createStackedChart('typeChart', typeData, 'y'); // Horizontal bar for types
+        });
+    </script>
+}

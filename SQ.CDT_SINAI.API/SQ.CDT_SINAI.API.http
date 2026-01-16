@@ -1,0 +1,6 @@
+@SQ.CDT_SINAI.API_HostAddress = http://localhost:5012
+
+GET {{SQ.CDT_SINAI.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
