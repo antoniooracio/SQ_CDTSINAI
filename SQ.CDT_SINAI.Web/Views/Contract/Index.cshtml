@@ -1,0 +1,168 @@
+@model List<SQ.CDT_SINAI.Shared.Models.Contract>
+@using SQ.CDT_SINAI.Shared.Models
+@{
+    ViewData["Title"] = "Gestão de Contratos";
+    var establishment = ViewBag.Establishment as Establishment;
+}
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Contratos</h1>
+                <small>@establishment?.Name - @establishment?.Regional</small>
+            </div>
+            <div class="col-sm-6 text-right">
+                <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modal-create">
+                    <i class="fas fa-plus"></i> Novo Contrato
+                </button>
+                <a asp-controller="Establishment" asp-action="Index" class="btn btn-default">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container-fluid">
+        
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                <h5><i class="icon fas fa-check"></i> Sucesso!</h5>
+                @TempData["Success"]
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                <h5><i class="icon fas fa-ban"></i> Erro!</h5>
+                @TempData["Error"]
+            </div>
+        }
+
+        <div class="card">
+            <div class="card-body table-responsive p-0">
+                <table class="table table-hover text-nowrap">
+                    <thead>
+                        <tr>
+                            <th>Número</th>
+                            <th>Fornecedor</th>
+                            <th>Objeto</th>
+                            <th>Vigência</th>
+                            <th>Valor Mensal</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.ContractNumber</td>
+                                <td>@item.VendorName</td>
+                                <td>@item.ObjectDescription</td>
+                                <td>@item.StartDate.ToString("dd/MM/yyyy") a @item.EndDate.ToString("dd/MM/yyyy")</td>
+                                <td>@item.MonthlyValue.ToString("C2")</td>
+                                <td>
+                                    @if(item.Status == ContractStatus.Active) { <span class="badge badge-success">Vigente</span> }
+                                    else if(item.Status == ContractStatus.Expired) { <span class="badge badge-danger">Vencido</span> }
+                                    else if(item.Status == ContractStatus.Canceled) { <span class="badge badge-secondary">Cancelado</span> }
+                                    else { <span class="badge badge-warning">Rascunho</span> }
+                                </td>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i> Detalhes
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.Any())
+                        {
+                            <tr><td colspan="7" class="text-center text-muted">Nenhum contrato cadastrado.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal Novo Contrato -->
+<div class="modal fade" id="modal-create">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success">
+                <h4 class="modal-title">Novo Contrato</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="EstablishmentId" value="@establishment?.Id" />
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 form-group"><label>Número do Contrato</label><input type="text" name="ContractNumber" class="form-control" required /></div>
+                        <div class="col-md-6 form-group"><label>Fornecedor</label><input type="text" name="VendorName" class="form-control" required /></div>
+                    </div>
+                    <div class="form-group"><label>Objeto do Contrato</label><textarea name="ObjectDescription" class="form-control" rows="2"></textarea></div>
+                    <div class="row">
+                        <div class="col-md-4 form-group"><label>Data Início</label><input type="date" name="StartDate" class="form-control" required /></div>
+                        <div class="col-md-4 form-group"><label>Data Fim</label><input type="date" name="EndDate" class="form-control" required /></div>
+                        <div class="col-md-4 form-group">
+                            <label>Valor Mensal</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend"><span class="input-group-text">R$</span></div>
+                                <input type="text" name="MonthlyValue" class="form-control mask-money" placeholder="0,00" required />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <div class="custom-control custom-checkbox mt-4">
+                                <input type="checkbox" class="custom-control-input" name="AutomaticRenewal" id="chkAutoRenewal" value="true">
+                                <label class="custom-control-label" for="chkAutoRenewal">Renovação Automática</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Meses para Renovação</label>
+                            <input type="number" name="RenewalMonths" class="form-control" min="1" placeholder="Ex: 12" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Arquivo do Contrato (PDF)</label>
+                        <input type="file" name="file" class="form-control-file" accept=".pdf" />
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Máscara de Moeda
+            $('.mask-money').mask('#.##0,00', {reverse: true});
+
+            // Limpar formatação ao enviar
+            $('form').on('submit', function() {
+                var moneyInput = $(this).find('.mask-money');
+                moneyInput.each(function() {
+                    var value = $(this).val();
+                    if (value) {
+                        var cleanValue = value.replace(/\./g, "").replace(",", ".");
+                        $(this).val(cleanValue);
+                    }
+                });
+            });
+        });
+    </script>
+}

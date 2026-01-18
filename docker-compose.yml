@@ -13,6 +13,11 @@ services:
       - ApiSettings__BaseUrl=http://sq-cdt-sinai-api:8080
     depends_on:
       - api
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
 
   # Sua API
   api:
@@ -28,6 +33,13 @@ services:
       - Jwt__Key=EstaEUmaChaveSecretaMuitoSeguraParaOProjetoSinai123!
     depends_on:
       - db
+    volumes:
+      - ./SQ.CDT_SINAI.API/Uploads:/app/Uploads
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
 
   # Banco de Dados MariaDB
   db:
@@ -40,6 +52,11 @@ services:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
 
 volumes:
   db_data:

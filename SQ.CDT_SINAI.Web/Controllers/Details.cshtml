@@ -1,0 +1,161 @@
+@model SQ.CDT_SINAI.Shared.Models.Contract
+@using SQ.CDT_SINAI.Shared.Models
+@{
+    ViewData["Title"] = "Detalhes do Contrato";
+}
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Contrato @Model.ContractNumber</h1>
+            </div>
+            <div class="col-sm-6 text-right">
+                <a asp-action="Index" asp-route-establishmentId="@Model.EstablishmentId" class="btn btn-default">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container-fluid">
+        
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                <h5><i class="icon fas fa-check"></i> Sucesso!</h5>
+                @TempData["Success"]
+            </div>
+        }
+
+        <div class="row">
+            <!-- Coluna Esquerda: Dados do Contrato -->
+            <div class="col-md-4">
+                <div class="card card-primary card-outline">
+                    <div class="card-body box-profile">
+                        <h3 class="profile-username text-center">@Model.VendorName</h3>
+                        <p class="text-muted text-center">@Model.ObjectDescription</p>
+
+                        <ul class="list-group list-group-unbordered mb-3">
+                            <li class="list-group-item">
+                                <b>Status</b> <a class="float-right">@Model.Status</a>
+                            </li>
+                            <li class="list-group-item">
+                                <b>Início</b> <a class="float-right">@Model.StartDate.ToString("dd/MM/yyyy")</a>
+                            </li>
+                            <li class="list-group-item">
+                                <b>Fim Atual</b> <a class="float-right text-danger">@Model.EndDate.ToString("dd/MM/yyyy")</a>
+                            </li>
+                            <li class="list-group-item">
+                                <b>Valor Mensal</b> <a class="float-right text-success">@Model.MonthlyValue.ToString("C2")</a>
+                            </li>
+                        </ul>
+
+                        <button class="btn btn-warning btn-block" data-toggle="modal" data-target="#modal-amendment">
+                            <i class="fas fa-file-signature"></i> <b>Adicionar Aditivo</b>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna Direita: Linha do Tempo -->
+            <div class="col-md-8">
+                <div class="timeline">
+                    <!-- Aditivos (Ordem Decrescente) -->
+                    @foreach (var amendment in Model.Amendments.OrderByDescending(a => a.SignatureDate))
+                    {
+                        <div class="time-label">
+                            <span class="bg-warning">@amendment.SignatureDate.ToString("dd MMM. yyyy")</span>
+                        </div>
+                        <div>
+                            <i class="fas fa-edit bg-blue"></i>
+                            <div class="timeline-item">
+                                <span class="time"><i class="fas fa-clock"></i> Aditivo</span>
+                                <h3 class="timeline-header"><a>@amendment.AmendmentNumber</a> - @amendment.Type</h3>
+
+                                <div class="timeline-body">
+                                    <p>@amendment.Description</p>
+                                    <ul>
+                                        @if (amendment.NewEndDate.HasValue)
+                                        {
+                                            <li>Nova Data Fim: <b>@amendment.NewEndDate.Value.ToString("dd/MM/yyyy")</b></li>
+                                        }
+                                        @if (amendment.NewMonthlyValue.HasValue)
+                                        {
+                                            <li>Novo Valor: <b>@amendment.NewMonthlyValue.Value.ToString("C2")</b></li>
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Contrato Original -->
+                    <div class="time-label">
+                        <span class="bg-success">@Model.StartDate.ToString("dd MMM. yyyy")</span>
+                    </div>
+                    <div>
+                        <i class="fas fa-handshake bg-green"></i>
+                        <div class="timeline-item">
+                            <h3 class="timeline-header no-border"><a>Contrato Inicial</a> assinado</h3>
+                            <div class="timeline-body">
+                                Início da vigência com valor de @Model.MonthlyValue.ToString("C2").
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <i class="fas fa-clock bg-gray"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal Adicionar Aditivo -->
+<div class="modal fade" id="modal-amendment">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h4 class="modal-title">Novo Termo Aditivo</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form asp-action="AddAmendment" method="post">
+                <input type="hidden" name="ContractId" value="@Model.Id" />
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Número do Aditivo</label>
+                        <input type="text" name="AmendmentNumber" class="form-control" placeholder="Ex: 1º Termo Aditivo" required />
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Tipo</label>
+                            <select name="Type" class="form-control" asp-items="Html.GetEnumSelectList<AmendmentType>()"></select>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Data Assinatura</label>
+                            <input type="date" name="SignatureDate" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="form-group"><label>Justificativa / Descrição</label><textarea name="Description" class="form-control" rows="2"></textarea></div>
+                    <hr />
+                    <p class="text-muted text-sm">Preencha apenas o que foi alterado:</p>
+                    <div class="row">
+                        <div class="col-md-6 form-group"><label>Nova Data Fim</label><input type="date" name="NewEndDate" class="form-control" /></div>
+                        <div class="col-md-6 form-group"><label>Novo Valor Mensal</label><input type="text" name="NewMonthlyValue" class="form-control mask-money" placeholder="R$ 0,00" /></div>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">Salvar Aditivo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

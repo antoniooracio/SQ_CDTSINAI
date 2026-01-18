@@ -110,6 +110,9 @@ namespace SQ.CDT_SINAI.Web.Controllers
                         case "email":
                             claimType = ClaimTypes.Email;
                             break;
+                        case "nameid":
+                            claimType = ClaimTypes.NameIdentifier;
+                            break;
                     }
 
                     claims.Add(new Claim(claimType, value));

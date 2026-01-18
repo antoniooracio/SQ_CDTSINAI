@@ -78,5 +78,41 @@ namespace SQ.CDT_SINAI.Web.Services
             var error = await response.Content.ReadAsStringAsync();
             return error.Trim('"');
         }
+
+        public async Task<string?> UpdatePhotoAsync(int id, IFormFile file)
+        {
+            AddAuthorizationHeader();
+            using var content = new MultipartFormDataContent();
+            var fileContent = new StreamContent(file.OpenReadStream());
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+            content.Add(fileContent, "file", file.FileName);
+
+            var response = await _httpClient.PostAsync($"api/collaborator/{id}/photo", content);
+            
+            if (response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadAsStringAsync();
+        }
+
+        public async Task<string?> ChangePasswordAsync(ChangePasswordDto dto)
+        {
+            AddAuthorizationHeader();
+            var response = await _httpClient.PostAsJsonAsync("api/collaborator/change-password", dto);
+            
+            if (response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadAsStringAsync();
+        }
+
+        public async Task<(byte[] Content, string ContentType)?> GetPhotoAsync(int id)
+        {
+            // Nota: Embora o endpoint da API seja AllowAnonymous, enviamos o token por padrão se disponível.
+            AddAuthorizationHeader();
+            var response = await _httpClient.GetAsync($"api/collaborator/{id}/photo");
+            
+            if (!response.IsSuccessStatusCode) return null;
+            
+            var content = await response.Content.ReadAsByteArrayAsync();
+            var contentType = response.Content.Headers.ContentType?.MediaType ?? "image/jpeg";
+            return (content, contentType);
+        }
     }
 }

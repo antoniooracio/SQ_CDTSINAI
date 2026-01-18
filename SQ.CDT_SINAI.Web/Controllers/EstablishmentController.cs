@@ -152,6 +152,8 @@ namespace SQ.CDT_SINAI.Web.Controllers
         }
 
         [HttpPost]
+        // Permite envio de HTML gigante (Base64) no formulário
+        [RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = 209715200)]
         public async Task<IActionResult> UploadDocument(UpdateDocumentStatusDto dto, IFormFile? file)
         {
             var error = await _legalizationService.SaveDocumentAsync(dto, file);

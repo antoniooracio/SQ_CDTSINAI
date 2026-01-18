@@ -32,6 +32,8 @@ namespace SQ.CDT_SINAI.Shared.Models
 
         public bool Active { get; set; } = true;
 
+        public string? ProfilePictureUrl { get; set; }
+
         // Controle de Acesso
         public int? RoleId { get; set; }
         [ForeignKey("RoleId")]

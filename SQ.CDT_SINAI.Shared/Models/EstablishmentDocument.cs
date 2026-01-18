@@ -37,6 +37,11 @@ namespace SQ.CDT_SINAI.Shared.Models
         public string? FilePath { get; set; } // Caminho do arquivo salvo no servidor
         public string? FileName { get; set; } // Nome original do arquivo
 
+        [Column(TypeName = "longtext")] // Garante suporte a imagens Base64 grandes
+        public string? ContentHtml { get; set; } // Conteúdo HTML (Bula/Manual)
+        public bool IsPermanent { get; set; } // Se é permanente (sem validade)
+        public string? Tags { get; set; } // Palavras-chave para busca
+
         public string? Justification { get; set; } // Para casos de Isento
 
         public bool AutomaticRenewal { get; set; }

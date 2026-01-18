@@ -44,6 +44,47 @@
     </div>
 </div>
 
+<!-- Alertas de Contratos (Vencimentos) -->
+<h5 class="mb-2 text-secondary"><i class="fas fa-handshake mr-1"></i> Contratos - Vencimentos</h5>
+<div class="row mb-3">
+    <div class="col-md-3 col-sm-6 col-12">
+        <div class="info-box shadow-sm">
+            <span class="info-box-icon bg-danger"><i class="far fa-calendar-times"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Vencidos</span>
+                <span class="info-box-number">@Model.ContractStats?.Expired</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 col-12">
+        <div class="info-box shadow-sm">
+            <span class="info-box-icon bg-orange"><i class="fas fa-exclamation-circle text-white"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Vencem em 5 dias</span>
+                <span class="info-box-number">@Model.ContractStats?.ExpiresIn5Days</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 col-12">
+        <div class="info-box shadow-sm">
+            <span class="info-box-icon bg-warning"><i class="far fa-clock text-white"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Vencem em 15 dias</span>
+                <span class="info-box-number">@Model.ContractStats?.ExpiresIn15Days</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 col-12">
+        <div class="info-box shadow-sm">
+            <span class="info-box-icon bg-info"><i class="far fa-calendar-alt"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Vencem em 30 dias</span>
+                <span class="info-box-number">@Model.ContractStats?.ExpiresIn30Days</span>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-lg-3 col-6">
         <!-- small box -->
@@ -101,6 +142,19 @@
         </div>
     </div>
     <!-- ./col -->
+    <div class="col-lg-3 col-6">
+        <!-- small box -->
+        <div class="small-box bg-secondary">
+            <div class="inner">
+                <h3>@Model.TotalMonthlyContractValue.ToString("C2")</h3>
+                <p>Valor Mensal (Contratos)</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-file-invoice-dollar"></i>
+            </div>
+            <a href="#" class="small-box-footer">Mais info <i class="fas fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
 </div>
 
 <div class="row">

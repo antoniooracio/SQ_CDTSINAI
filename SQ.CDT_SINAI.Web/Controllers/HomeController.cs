@@ -13,13 +13,15 @@ namespace SQ.CDT_SINAI.Web.Controllers
         private readonly ISpecializationService _specializationService;
         private readonly IIncidentService _incidentService;
         private readonly ILegalizationService _legalizationService;
+        private readonly IContractService _contractService;
 
-        public HomeController(ICollaboratorService collaboratorService, ISpecializationService specializationService, IIncidentService incidentService, ILegalizationService legalizationService)
+        public HomeController(ICollaboratorService collaboratorService, ISpecializationService specializationService, IIncidentService incidentService, ILegalizationService legalizationService, IContractService contractService)
         {
             _collaboratorService = collaboratorService;
             _specializationService = specializationService;
             _incidentService = incidentService;
             _legalizationService = legalizationService;
+            _contractService = contractService;
         }
 
         public async Task<IActionResult> Index(int page = 1, IncidentStatus status = IncidentStatus.Open, DateTime? startDate = null, DateTime? endDate = null)
@@ -35,6 +37,8 @@ namespace SQ.CDT_SINAI.Web.Controllers
             var myIncidents = await _incidentService.GetMyIncidentsAsync(page, 5, status, startDate, endDate);
             var stats = await _incidentService.GetMyIncidentStatisticsAsync();
             var docStats = await _legalizationService.GetStatsAsync();
+            var contractStats = await _contractService.GetStatsAsync();
+            var totalMonthlyValue = await _contractService.GetMonthlyValueStatsAsync();
 
             var viewModel = new DashboardViewModel
             {
@@ -45,7 +49,9 @@ namespace SQ.CDT_SINAI.Web.Controllers
                 CurrentFilter = status,
                 StartDate = startDate,
                 EndDate = endDate,
-                DocumentStats = docStats
+                DocumentStats = docStats,
+                ContractStats = contractStats,
+                TotalMonthlyContractValue = totalMonthlyValue
             };
 
             return View(viewModel);

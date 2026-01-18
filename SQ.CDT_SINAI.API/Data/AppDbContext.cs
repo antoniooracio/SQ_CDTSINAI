@@ -9,6 +9,8 @@ namespace SQ.CDT_SINAI.API.Data
 
         public DbSet<Collaborator> Collaborators { get; set; }
         public DbSet<Specialization> Specializations { get; set; }
+        public DbSet<Contract> Contracts { get; set; }
+        public DbSet<ContractAmendment> ContractAmendments { get; set; }
         public DbSet<Incident> Incidents { get; set; }
         public DbSet<Brand> Brands { get; set; }
         public DbSet<EstablishmentType> EstablishmentTypes { get; set; }
@@ -52,6 +54,29 @@ namespace SQ.CDT_SINAI.API.Data
                 // Colaborador (Exemplo)
                 new RolePermission { Id = 10, RoleId = 3, Module = "Collaborator", Action = "View" }
             );
+
+            // Seed de Usuário Administrador Inicial
+            modelBuilder.Entity<Collaborator>().HasData(new Collaborator
+            {
+                Id = 1,
+                Name = "Administrador do Sistema",
+                Email = "admin@sinai.com.br",
+                Password = "admin", // Senha padrão para desenvolvimento
+                Cpf = "000.000.000-00",
+                RoleId = 1, // Administrador
+                Active = true,
+                BirthDate = new DateTime(1990, 1, 1),
+                AdmissionDate = new DateTime(2023, 1, 1),
+                PhoneNumber = "00000000000",
+                AddressStreet = "Sede",
+                AddressNumber = "1",
+                AddressNeighborhood = "Centro",
+                AddressCity = "Palmas",
+                AddressState = "TO",
+                AddressZipCode = "77000-000",
+                JobTitle = "Super Admin",
+                ProfessionalLicense = "N/A"
+            });
         }
     }
 }

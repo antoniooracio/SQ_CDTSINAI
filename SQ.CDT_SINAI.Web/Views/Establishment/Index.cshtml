@@ -179,6 +179,9 @@
                                         <a asp-action="Legalization" asp-route-id="@item.Id" class="btn btn-sm btn-primary" title="Documentos">
                                             <i class="fas fa-file-contract"></i>
                                         </a>
+                                        <a asp-controller="Contract" asp-action="Index" asp-route-establishmentId="@item.Id" class="btn btn-sm btn-secondary" title="Contratos">
+                                            <i class="fas fa-handshake"></i>
+                                        </a>
                                         <button class="btn btn-sm btn-danger" title="Remover (Em breve)">
                                             <i class="fas fa-trash"></i>
                                         </button>

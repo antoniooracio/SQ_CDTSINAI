@@ -64,6 +64,7 @@ Abaixo, explicamos a responsabilidade de cada Controller principal no sistema.
 | :--- | :--- | :--- |
 | `EstablishmentController` | `EstablishmentController` | CRUD de Estabelecimentos. É o ponto de entrada para a tela de gestão de documentos (`Legalization`). |
 | - | `LegalizationController` | Gerencia o upload de arquivos, download, controle de vencimentos e geração de relatórios PDF. |
+| `ContractController` | `ContractController` | Gestão de Contratos, Aditivos, Uploads e Renovação Automática. |
 | `DocumentTypeController` | `DocumentTypeController` | CRUD de Tipos de Documentos (ex: Alvará, AVCB). |
 | `BrandController` | `BrandController` | CRUD de Marcas (ex: Sinai, CDT). |
 | `EstablishmentTypeController` | `EstablishmentTypeController` | CRUD de Tipos de Unidade (ex: Hospital, Clínica). |
@@ -92,7 +93,8 @@ O menu lateral do sistema está organizado por áreas funcionais:
 
 4.  **Módulo Gestão de Legalização**
     *   **Estabelecimentos:** Cadastro das unidades. Na listagem, há um botão "Documentos" que leva à tela de gestão de arquivos.
-    *   **Marcas / Tipos de Estabelecimento / Tipos de Documentos:** Cadastros auxiliares para categorização.
+    *   **Contratos:** (Acessado via botão na lista de Estabelecimentos) Gestão de contratos e aditivos.
+    *   **Hist. Renov. Contratos:** Auditoria das renovações automáticas de contratos.
 
 5.  **Cadastros Gerais**
     *   **Especializações:** Cadastro de áreas médicas/técnicas.
@@ -119,6 +121,22 @@ O menu lateral do sistema está organizado por áreas funcionais:
 - **Limpar Cache de Build:** `docker builder prune -f`
 - **Recriar Forçado:** `docker-compose up -d --build --force-recreate`
 
+### Rodando Migrations via Docker (Sem instalar .NET no Host)
+O container da API em execução geralmente não possui o SDK necessário para criar migrations. Para rodar comandos como `migrations add` sem instalar o .NET na sua máquina, use um container temporário:
+
+1. **Inicie um container do SDK montando a pasta do projeto:**
+   ```bash
+   docker run --rm -it -v $(pwd):/src -w /src mcr.microsoft.com/dotnet/sdk:9.0 bash
+   ```
+2. **Dentro do container, instale a ferramenta do EF e execute o comando:**
+   ```bash
+   dotnet tool install --global dotnet-ef
+   export PATH="$PATH:/root/.dotnet/tools"
+   
+   # Exemplo: Criar Migration
+   dotnet ef migrations add InitialCreate --project SQ.CDT_SINAI.API --startup-project SQ.CDT_SINAI.API
+   ```
+
 ## 6. Banco de Dados e Migrations
 O sistema usa **Entity Framework Core Code-First**.
 
@@ -128,6 +146,26 @@ O sistema usa **Entity Framework Core Code-First**.
   dotnet ef migrations add NomeDaMudanca --project SQ.CDT_SINAI.API --startup-project SQ.CDT_SINAI.API
   ```
 - **Aplicar:** Basta reiniciar o container da API.
+
+### Inicialização do Banco (Primeira Vez)
+Caso você esteja configurando o ambiente do zero e o banco de dados ainda não exista (ou se você excluiu a pasta Migrations para recomeçar):
+
+1. **Criar a Migration Inicial:**
+   No terminal, execute o comando para gerar o script de criação das tabelas e dos dados iniciais (Seed):
+   ```bash
+   dotnet ef migrations add InitialCreate --project SQ.CDT_SINAI.API --startup-project SQ.CDT_SINAI.API
+   ```
+
+### Gerar Script SQL para Produção
+Embora a API aplique migrations automaticamente ao iniciar, em ambientes de produção críticos você pode preferir gerar um script SQL e rodar manualmente no banco:
+```bash
+dotnet ef migrations script --output deploy.sql --project SQ.CDT_SINAI.API --startup-project SQ.CDT_SINAI.API --idempotent
+```
+
+### Usuário Padrão (Seed)
+A primeira migration já insere um usuário administrador para acesso inicial ao sistema:
+- **Login:** admin@sinai.com.br
+- **Senha:** admin
 
 ## 7. Histórico de Versões e Funcionalidades
 
@@ -165,6 +203,22 @@ O sistema usa **Entity Framework Core Code-First**.
 - Dashboard interativo com gráficos (Pizza, Barra, Linha) utilizando Chart.js.
 - Indicadores de SLA (Tempo Médio) e volumetria por área/mês.
 
+### v1.6 - Gestão de Conhecimento e Documentos Digitais
+- **Editor de Texto Rico (HTML):** Integração do Summernote para criação de manuais e bulas diretamente no sistema.
+- **Suporte a Imagens:** Tratamento de imagens em Base64 e upload via editor.
+- **Documentos Permanentes:** Flag para documentos sem data de validade.
+- **Tags:** Campo de palavras-chave para indexação e busca.
+- **Modo de Leitura:** Modal com suporte a Tela Cheia e navegação interna (âncoras e "Ir para o topo").
+- **Infraestrutura:** Ajuste de limites de upload na API e Web para suportar grandes payloads (Base64).
+
+### v1.7 - Gestão de Contratos e Aditivos (Atual)
+- **Contratos:** Cadastro de contratos com controle de vigência, valores e fornecedores.
+- **Aditivos:** Gestão de alterações contratuais (Prazo, Valor, Escopo) com linha do tempo visual (Timeline).
+- **Arquivos:** Upload de PDFs para contratos originais e aditivos.
+- **Renovação Automática:** Worker Service dedicado para renovação de contratos.
+- **Auditoria:** Histórico de renovações com filtros (Data, Texto) e funcionalidade de **Reverter**.
+- **Dashboard:** Novos alertas de vencimento para contratos e card de Valor Mensal Total.
+
 ### Lógica do Relatório de Legalização
 O relatório de documentos legais segue uma lógica "inteligente". Ele exibe apenas os documentos que são **obrigatórios** (configurados no Tipo de Estabelecimento) para as unidades filtradas.
 - **Objetivo:** Evitar poluição visual com documentos irrelevantes para o tipo de unidade.
@@ -198,6 +252,12 @@ Define as opções utilizadas nos formulários de abertura e filtro de ocorrênc
 | :--- | :--- | :--- |
 | `DocumentStatus` | Situação (Pendente, Emitido, Vencido...) | `Establishment/Legalization.cshtml` |
 
+#### 4. Contratos (`SQ.CDT_SINAI.Shared/Models/Contract.cs`)
+| Enum | Descrição | Onde é usado (Views) |
+| :--- | :--- | :--- |
+| `ContractStatus` | Status (Vigente, Vencido, Cancelado...) | `Contract/Index.cshtml`<br>`Contract/Details.cshtml` |
+| `AmendmentType` | Tipo de Aditivo (Prazo, Valor, Escopo...) | `Contract/Details.cshtml` |
+
 ## 9. Publicação e Deploy (Produção)
 
 Para publicar o sistema em um servidor de produção (IIS, Linux com Nginx, ou Docker), siga os passos abaixo para gerar os arquivos compilados.
@@ -230,3 +290,15 @@ Antes de rodar, edite o arquivo `appsettings.json` em cada pasta no servidor par
 
 ---
 *Última atualização: Reversão de Renovações.*
+
+## 10. Solução de Problemas (Troubleshooting)
+
+### Erro: Duplicate column name 'ProfilePictureUrl'
+Este erro ocorre quando o banco de dados já possui a coluna, mas o Entity Framework tenta criar novamente (desincronia entre banco e migrations).
+
+**Solução Definitiva (Ambiente de Desenvolvimento):**
+Recrie o banco de dados do zero apagando o volume do Docker:
+```bash
+docker-compose down -v
+docker-compose up --build
+```

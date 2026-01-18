@@ -87,8 +87,15 @@ Gerencie a documentação regulatória das unidades (Alvarás, Licenças, AVCB).
     *   Clique em **Atualizar**.
     *   Faça o upload do arquivo PDF/Imagem.
     *   Defina a nova data de validade e status.
+    *   **Documentos Digitais (HTML):** Você pode colar o conteúdo de manuais ou bulas diretamente no editor de texto.
+        *   **Imagens:** Se copiar de outro site, use o botão "Substituir" nas imagens quebradas para enviar o arquivo do seu computador.
+        *   **Tags:** Adicione palavras-chave para facilitar a busca.
+    *   **Documento Permanente:** Marque esta opção para documentos que não possuem data de vencimento (ex: Estatutos).
     *   **Renovação Automática:** Se desejar, marque a opção e defina quantos meses o documento deve ser renovado automaticamente ao vencer.
 4.  **Relatório:** Clique em "Gerar Relatório" para baixar um PDF com o resumo da situação legal da unidade.
+5.  **Leitura:** Para documentos digitais (HTML), clique no botão **Ler**.
+    *   Use o botão de **Tela Cheia** no canto superior direito para melhor visualização.
+    *   Links internos e "Ir para o topo" funcionam para navegação rápida.
 
 ### Tipos de Estabelecimento
 Para padronizar a documentação exigida, você pode configurar os tipos de estabelecimento.
@@ -114,7 +121,42 @@ Caso uma renovação automática tenha ocorrido indevidamente (ex: configurou os
 
 ---
 
-## 5. Módulo de Segurança
+## 5. Gestão de Contratos e Aditivos
+
+Além dos documentos legais (Alvarás), o sistema permite gerenciar contratos de prestação de serviços e seus aditivos.
+
+### Acessar Contratos
+1.  Vá em **Gestão de Legalização > Estabelecimentos**.
+2.  Na lista de unidades, localize a desejada e clique no botão cinza **Contratos** (ícone de aperto de mão).
+
+### Novo Contrato
+1.  Na tela de contratos da unidade, clique em **Novo Contrato**.
+2.  Preencha os dados principais: Número, Fornecedor, Objeto, Vigência e Valor.
+3.  Anexe o arquivo PDF do contrato original.
+4.  Clique em **Salvar**.
+
+### Adicionar Termo Aditivo (Emenda)
+Quando um contrato sofre alterações (prazo, valor ou escopo), você deve registrar um Aditivo:
+
+1.  Na lista de contratos, clique em **Detalhes** no contrato desejado.
+2.  Você verá a linha do tempo do contrato. Clique no botão amarelo **Adicionar Aditivo**.
+3.  Preencha os dados do aditivo:
+    *   **Número:** Ex: "1º Termo Aditivo".
+    *   **Tipo:** Prorrogação, Reajuste, etc.
+    *   **Alterações:** Preencha a Nova Data Fim ou Novo Valor apenas se houver mudança. O sistema atualizará o contrato principal automaticamente.
+    *   **Arquivo:** Anexe o PDF do aditivo.
+4.  Clique em **Salvar Aditivo**. O novo evento aparecerá no topo da linha do tempo.
+
+### Histórico de Renovações Automáticas (Contratos)
+Assim como na legalização, o sistema pode renovar contratos automaticamente se configurado.
+1.  Vá em **Gestão de Legalização > Hist. Renov. Contratos**.
+2.  Utilize os filtros no topo da tela para buscar por **Período** ou por texto (Nome do Estabelecimento, Número do Contrato ou Fornecedor).
+3.  A tabela exibirá os detalhes da renovação.
+4.  Se necessário, utilize o botão **Reverter** para desfazer uma renovação automática indevida.
+
+---
+
+## 6. Módulo de Segurança
 
 (Acesso restrito a Administradores e Gestores)
 
@@ -124,7 +166,7 @@ Caso uma renovação automática tenha ocorrido indevidamente (ex: configurou os
 
 ---
 
-## 6. Relatórios de Ocorrências
+## 7. Relatórios de Ocorrências
 
 O sistema oferece uma ferramenta para análise de dados de qualidade através de gráficos e indicadores.
 
@@ -150,7 +192,7 @@ Ao gerar o relatório de documentos legais, o sistema utiliza uma lógica inteli
 
 ---
 
-## 7. Fluxo de Dados (Visão Geral)
+## 8. Fluxo de Dados (Visão Geral)
 
 Abaixo, um diagrama simplificado de como os dados fluem no sistema:
 

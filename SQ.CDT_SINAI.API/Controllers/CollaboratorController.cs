@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SQ.CDT_SINAI.API.Data;
 using SQ.CDT_SINAI.Shared.DTOs;
 using SQ.CDT_SINAI.Shared.Models;
+using System.Security.Claims;
 
 namespace SQ.CDT_SINAI.API.Controllers
 {
@@ -13,10 +16,12 @@ namespace SQ.CDT_SINAI.API.Controllers
     public class CollaboratorController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IWebHostEnvironment _environment;
 
-        public CollaboratorController(AppDbContext context)
+        public CollaboratorController(AppDbContext context, IWebHostEnvironment environment)
         {
             _context = context;
+            _environment = environment;
         }
 
         [HttpGet]
@@ -62,7 +67,8 @@ namespace SQ.CDT_SINAI.API.Controllers
             if (await _context.Collaborators.AnyAsync(u => u.Cpf == dto.Cpf))
                 return BadRequest("CPF já cadastrado.");
 
-            if (await _context.Collaborators.AnyAsync(u => u.PhoneNumber == dto.PhoneNumber))
+            var phone = dto.PhoneNumber?.Trim();
+            if (!string.IsNullOrEmpty(phone) && await _context.Collaborators.AnyAsync(u => u.PhoneNumber == phone))
                 return BadRequest("Telefone já cadastrado.");
 
             // Busca as especializações pelos IDs informados
@@ -84,17 +90,17 @@ namespace SQ.CDT_SINAI.API.Controllers
                 Establishments = establishments,
                 
                 Cpf = dto.Cpf,
-                Rg = dto.Rg,
+                Rg = dto.Rg ?? string.Empty,
                 BirthDate = dto.BirthDate,
-                PhoneNumber = dto.PhoneNumber ?? string.Empty,
+                PhoneNumber = phone ?? string.Empty,
                 AddressStreet = dto.AddressStreet ?? string.Empty,
                 AddressNumber = dto.AddressNumber ?? string.Empty,
                 AddressNeighborhood = dto.AddressNeighborhood ?? string.Empty,
                 AddressCity = dto.AddressCity ?? string.Empty,
                 AddressState = dto.AddressState ?? string.Empty,
                 AddressZipCode = dto.AddressZipCode ?? string.Empty,
-                ProfessionalLicense = dto.ProfessionalLicense,
-                JobTitle = dto.JobTitle,
+                ProfessionalLicense = dto.ProfessionalLicense ?? string.Empty,
+                JobTitle = dto.JobTitle ?? string.Empty,
                 AdmissionDate = dto.AdmissionDate
             };
 
@@ -125,18 +131,19 @@ namespace SQ.CDT_SINAI.API.Controllers
             if (await _context.Collaborators.AnyAsync(c => c.Email == dto.Email && c.Id != id))
                 return BadRequest("Email já cadastrado para outro colaborador.");
 
-            if (await _context.Collaborators.AnyAsync(c => c.PhoneNumber == dto.PhoneNumber && c.Id != id))
+            var phone = dto.PhoneNumber?.Trim();
+            if (!string.IsNullOrEmpty(phone) && await _context.Collaborators.AnyAsync(c => c.PhoneNumber == phone && c.Id != id))
                 return BadRequest("Telefone já cadastrado para outro colaborador.");
 
             // Atualiza propriedades simples
             collaborator.Name = dto.Name;
             collaborator.Email = dto.Email;
             collaborator.Cpf = dto.Cpf;
-            collaborator.Rg = dto.Rg;
+            collaborator.Rg = dto.Rg ?? string.Empty;
             collaborator.BirthDate = dto.BirthDate;
-            collaborator.PhoneNumber = dto.PhoneNumber ?? string.Empty;
-            collaborator.JobTitle = dto.JobTitle;
-            collaborator.ProfessionalLicense = dto.ProfessionalLicense;
+            collaborator.PhoneNumber = phone ?? string.Empty;
+            collaborator.JobTitle = dto.JobTitle ?? string.Empty;
+            collaborator.ProfessionalLicense = dto.ProfessionalLicense ?? string.Empty;
             collaborator.Active = dto.Active;
             collaborator.RoleId = dto.RoleId;
             
@@ -163,6 +170,88 @@ namespace SQ.CDT_SINAI.API.Controllers
 
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+        [HttpPost("{id}/photo")]
+        public async Task<IActionResult> UploadPhoto(int id, IFormFile file)
+        {
+            var collaborator = await _context.Collaborators.FindAsync(id);
+            if (collaborator == null) return NotFound();
+
+            if (file == null || file.Length == 0)
+                return BadRequest("Nenhum arquivo enviado.");
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(extension))
+                return BadRequest("Formato de imagem inválido.");
+
+            var uploadFolder = Path.Combine(_environment.ContentRootPath, "Uploads", "Profiles");
+            if (!Directory.Exists(uploadFolder))
+                Directory.CreateDirectory(uploadFolder);
+
+            // Remove foto antiga se existir
+            if (!string.IsNullOrEmpty(collaborator.ProfilePictureUrl))
+            {
+                var oldPath = Path.Combine(uploadFolder, collaborator.ProfilePictureUrl);
+                if (System.IO.File.Exists(oldPath))
+                {
+                    System.IO.File.Delete(oldPath);
+                }
+            }
+
+            var uniqueFileName = $"{id}_{Guid.NewGuid()}{extension}";
+            var filePath = Path.Combine(uploadFolder, uniqueFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            collaborator.ProfilePictureUrl = uniqueFileName;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Foto atualizada com sucesso.", url = uniqueFileName });
+        }
+
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized();
+            var userId = int.Parse(userIdClaim.Value);
+
+            var user = await _context.Collaborators.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            if (user.Password != dto.CurrentPassword)
+                return BadRequest("Senha atual incorreta.");
+
+            user.Password = dto.NewPassword;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Senha alterada com sucesso." });
+        }
+
+        [HttpGet("{id}/photo")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetPhoto(int id)
+        {
+            var collaborator = await _context.Collaborators.FindAsync(id);
+            if (collaborator == null || string.IsNullOrEmpty(collaborator.ProfilePictureUrl))
+                return NotFound();
+
+            var filePath = Path.Combine(_environment.ContentRootPath, "Uploads", "Profiles", collaborator.ProfilePictureUrl);
+
+            if (!System.IO.File.Exists(filePath))
+                return NotFound();
+
+            var extension = Path.GetExtension(filePath).ToLowerInvariant();
+            var contentType = extension == ".png" ? "image/png" : 
+                              extension == ".gif" ? "image/gif" : "image/jpeg";
+
+            var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            return File(fileStream, contentType);
         }
     }
 }

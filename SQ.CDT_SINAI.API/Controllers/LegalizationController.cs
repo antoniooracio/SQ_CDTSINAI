@@ -27,6 +27,8 @@ namespace SQ.CDT_SINAI.API.Controllers
 
         // POST: api/legalization/save
         [HttpPost("save")]
+        // Aumenta o limite para valores de formulário (Base64) e para o corpo total da requisição (ex: 200MB)
+        [RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = 209715200)]
         public async Task<IActionResult> SaveDocument([FromForm] UpdateDocumentStatusDto dto, IFormFile? file)
         {
             // Validação de Acesso
@@ -60,6 +62,15 @@ namespace SQ.CDT_SINAI.API.Controllers
             document.AutomaticRenewal = dto.AutomaticRenewal;
             document.RenewalMonths = dto.RenewalMonths;
             document.LastUpdated = DateTime.Now;
+            document.ContentHtml = dto.ContentHtml;
+            document.IsPermanent = dto.IsPermanent;
+            document.Tags = dto.Tags;
+
+            // Se for permanente, limpa a data de validade
+            if (document.IsPermanent)
+            {
+                document.ExpirationDate = null;
+            }
 
             // 3. Processa o Upload do Arquivo (se enviado)
             if (file != null && file.Length > 0)

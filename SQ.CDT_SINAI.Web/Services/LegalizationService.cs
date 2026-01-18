@@ -59,6 +59,9 @@ namespace SQ.CDT_SINAI.Web.Services
             if (!string.IsNullOrEmpty(dto.Justification)) content.Add(new StringContent(dto.Justification), nameof(dto.Justification));
             content.Add(new StringContent(dto.AutomaticRenewal.ToString()), nameof(dto.AutomaticRenewal));
             content.Add(new StringContent(dto.RenewalMonths.ToString()), nameof(dto.RenewalMonths));
+            if (!string.IsNullOrEmpty(dto.ContentHtml)) content.Add(new StringContent(dto.ContentHtml), nameof(dto.ContentHtml));
+            content.Add(new StringContent(dto.IsPermanent.ToString()), nameof(dto.IsPermanent));
+            if (!string.IsNullOrEmpty(dto.Tags)) content.Add(new StringContent(dto.Tags), nameof(dto.Tags));
 
             if (file != null)
             {

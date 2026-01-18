@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SQ.CDT_SINAI.API.Data;
 
@@ -11,9 +12,11 @@ using SQ.CDT_SINAI.API.Data;
 namespace SQ.CDT_SINAI.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260117121102_AddTagsToDocuments")]
+    partial class AddTagsToDocuments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -237,102 +240,6 @@ namespace SQ.CDT_SINAI.API.Migrations
                             Rg = "",
                             RoleId = 1
                         });
-                });
-
-            modelBuilder.Entity("SQ.CDT_SINAI.Shared.Models.Contract", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("AutomaticRenewal")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("ContractNumber")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("EstablishmentId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("FileName")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("FilePath")
-                        .HasColumnType("longtext");
-
-                    b.Property<decimal>("MonthlyValue")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<string>("ObjectDescription")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("RenewalMonths")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<string>("VendorName")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Contracts");
-                });
-
-            modelBuilder.Entity("SQ.CDT_SINAI.Shared.Models.ContractAmendment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AmendmentNumber")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("ContractId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("FileName")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("FilePath")
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime?>("NewEndDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<decimal?>("NewMonthlyValue")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<DateTime>("SignatureDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContractId");
-
-                    b.ToTable("ContractAmendments");
                 });
 
             modelBuilder.Entity("SQ.CDT_SINAI.Shared.Models.DocumentRenewalLog", b =>
@@ -868,17 +775,6 @@ namespace SQ.CDT_SINAI.API.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("SQ.CDT_SINAI.Shared.Models.ContractAmendment", b =>
-                {
-                    b.HasOne("SQ.CDT_SINAI.Shared.Models.Contract", "Contract")
-                        .WithMany("Amendments")
-                        .HasForeignKey("ContractId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Contract");
-                });
-
             modelBuilder.Entity("SQ.CDT_SINAI.Shared.Models.DocumentRenewalLog", b =>
                 {
                     b.HasOne("SQ.CDT_SINAI.Shared.Models.EstablishmentDocument", "EstablishmentDocument")
@@ -933,11 +829,6 @@ namespace SQ.CDT_SINAI.API.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
-                });
-
-            modelBuilder.Entity("SQ.CDT_SINAI.Shared.Models.Contract", b =>
-                {
-                    b.Navigation("Amendments");
                 });
 
             modelBuilder.Entity("SQ.CDT_SINAI.Shared.Models.Establishment", b =>

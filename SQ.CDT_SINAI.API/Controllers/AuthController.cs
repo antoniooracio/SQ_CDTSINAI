@@ -16,11 +16,13 @@ namespace SQ.CDT_SINAI.API.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(AppDbContext context, IConfiguration configuration)
+        public AuthController(AppDbContext context, IConfiguration configuration, ILogger<AuthController> logger)
         {
             _context = context;
             _configuration = configuration;
+            _logger = logger;
         }
 
         [HttpPost("register")]
@@ -77,13 +79,28 @@ namespace SQ.CDT_SINAI.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto dto)
         {
+            _logger.LogInformation($"Tentativa de login para: {dto.Email}");
+            
+            // Diagnóstico: Conta quantos usuários existem no total
+            var totalUsers = await _context.Collaborators.CountAsync();
+            _logger.LogInformation($"Total de usuários no banco: {totalUsers}");
+
             var user = await _context.Collaborators
                 .Include(c => c.Specializations)
                 .Include(c => c.Role)
-                .FirstOrDefaultAsync(u => u.Email == dto.Email && u.Password == dto.Password);
+                .FirstOrDefaultAsync(u => u.Email == dto.Email);
 
-            if (user == null || !user.Active)
+            if (user == null)
+            {
+                _logger.LogWarning($"LOGIN FALHOU: Usuário não encontrado no banco de dados para o email: '{dto.Email}'");
                 return Unauthorized("Email ou senha inválidos.");
+            }
+
+            if (user.Password != dto.Password || !user.Active)
+            {
+                _logger.LogWarning($"LOGIN FALHOU: Senha incorreta ou usuário inativo para: {dto.Email}. Ativo: {user.Active}. Senha Banco: '{user.Password}' vs Senha Recebida: '{dto.Password}'");
+                return Unauthorized("Email ou senha inválidos.");
+            }
 
             var token = GenerateJwtToken(user);
             return Ok(new { token, user = new { user.Name, user.Email, user.Specializations } });

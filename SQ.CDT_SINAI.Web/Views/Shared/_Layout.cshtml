@@ -79,10 +79,12 @@
                 <!-- Sidebar user panel (optional) -->
                 <div class="user-panel mt-3 pb-3 mb-3 d-flex">
                     <div class="image">
-                        <img src="https://adminlte.io/themes/v3/dist/img/user2-160x160.jpg" class="img-circle elevation-2" alt="User Image">
+                        <a href="@Url.Action("Index", "Profile")">
+                            <img src="@Url.Action("GetAvatar", "Profile")?v=@DateTime.Now.Ticks" class="img-circle elevation-2" alt="User Image" style="width: 2.1rem; height: 2.1rem; object-fit: cover;">
+                        </a>
                     </div>
                     <div class="info">
-                        <a href="#" class="d-block">@(User.Identity?.Name ?? "Usuário")</a>
+                        <a href="@Url.Action("Index", "Profile")" class="d-block">@(User.Identity?.Name?.Split(' ')[0] ?? "Usuário")</a>
                     </div>
                 </div>
 
@@ -204,6 +206,12 @@
                                     </a>
                                 </li>
                                 <li class="nav-item">
+                                    <a asp-controller="ContractRenewalLog" asp-action="Index" class="nav-link @(currentController == "ContractRenewalLog" ? "active" : "")">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Hist. Renov. Contratos</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
                                     <a asp-controller="Report" asp-action="Legalization" class="nav-link @(currentAction == "Legalization" ? "active" : "")">
                                         <i class="far fa-chart-bar nav-icon"></i>
                                         <p>Relatórios</p>
@@ -317,6 +325,17 @@
                 showStepNumbers: true
             }).start();
         }
+    </script>
+
+    <!-- Notificações Globais (Toastr) -->
+    <script>
+        $(function() {
+            var successMsg = @Json.Serialize(TempData["Success"]);
+            var errorMsg = @Json.Serialize(TempData["Error"]);
+
+            if (successMsg) toastr.success(successMsg);
+            if (errorMsg) toastr.error(errorMsg);
+        });
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)

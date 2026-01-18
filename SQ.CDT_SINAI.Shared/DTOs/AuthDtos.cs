@@ -77,4 +77,14 @@ namespace SQ.CDT_SINAI.Shared.DTOs
         public int RoleId { get; set; }
         public List<int> EstablishmentIds { get; set; } = new();
     }
+
+    public class ChangePasswordDto
+    {
+        [Required(ErrorMessage = "A senha atual é obrigatória.")]
+        public string CurrentPassword { get; set; }
+
+        [Required(ErrorMessage = "A nova senha é obrigatória.")]
+        [MinLength(6, ErrorMessage = "A senha deve ter no mínimo 6 caracteres.")]
+        public string NewPassword { get; set; }
+    }
 }

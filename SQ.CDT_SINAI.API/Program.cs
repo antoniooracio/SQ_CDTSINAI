@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SQ.CDT_SINAI.API.Data;
+using SQ.CDT_SINAI.API.Workers;
 using System.Text;
 using QuestPDF.Infrastructure;
 using System.Text.Json.Serialization;
@@ -44,6 +45,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Registrar Serviço de Renovação Automática
 builder.Services.AddHostedService<SQ.CDT_SINAI.API.Services.DocumentRenewalWorker>();
 
+// Registrar Worker de Renovação de Contratos
+builder.Services.AddHostedService<ContractRenewalWorker>();
+
 // Adicionar HealthChecks (Verifica se a API e o Banco estão respondendo)
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<AppDbContext>();
@@ -69,6 +73,13 @@ builder.Services.AddAuthentication(x =>
 });
 
 var app = builder.Build();
+
+// Garantir que a pasta de Uploads exista ao iniciar a API
+var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "Uploads", "Profiles");
+if (!Directory.Exists(uploadsPath))
+{
+    Directory.CreateDirectory(uploadsPath);
+}
 
 // Aplicar Migrations automaticamente ao iniciar (Essencial para Docker)
 using (var scope = app.Services.CreateScope())
@@ -102,11 +113,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Habilita Swagger sempre para facilitar debug em Docker
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // app.UseHttpsRedirection();
 

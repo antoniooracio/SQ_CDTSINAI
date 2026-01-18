@@ -15,5 +15,7 @@ namespace SQ.CDT_SINAI.Web.Models.ViewModels
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public DocumentExpirationStatsDto DocumentStats { get; set; } = new();
+        public ContractExpirationStatsDto ContractStats { get; set; } = new();
+        public decimal TotalMonthlyContractValue { get; set; }
     }
 }

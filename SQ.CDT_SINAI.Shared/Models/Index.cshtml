@@ -1,0 +1,105 @@
+@model List<SQ.CDT_SINAI.Shared.Models.ContractAmendment>
+@{
+    ViewData["Title"] = "Histórico de Renovações de Contratos";
+}
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Histórico de Renovações Automáticas</h1>
+            </div>
+            <div class="col-sm-6 text-right">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-default">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container-fluid">
+        
+        <!-- Filtros -->
+        <div class="card card-default">
+            <div class="card-body">
+                <form method="get" class="form-inline">
+                    <label class="mr-2">Período:</label>
+                    <input type="date" name="startDate" class="form-control mr-2" value="@ViewData["StartDate"]" />
+                    <span class="mr-2">até</span>
+                    <input type="date" name="endDate" class="form-control mr-4" value="@ViewData["EndDate"]" />
+                    
+                    <label class="mr-2">Buscar:</label>
+                    <input type="text" name="search" class="form-control mr-2" placeholder="Estabelecimento, Contrato ou Fornecedor" value="@ViewData["Search"]" style="width: 300px;" />
+                    
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Filtrar</button>
+                    <a asp-action="Index" class="btn btn-default ml-2">Limpar</a>
+                </form>
+            </div>
+        </div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                <h5><i class="icon fas fa-check"></i> Sucesso!</h5>
+                @TempData["Success"]
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                <h5><i class="icon fas fa-ban"></i> Erro!</h5>
+                @TempData["Error"]
+            </div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-history mr-1"></i> Logs de Execução do Robô</h3>
+            </div>
+            <div class="card-body table-responsive p-0">
+                <table class="table table-hover text-nowrap">
+                    <thead>
+                        <tr>
+                            <th>Data Execução</th>
+                            <th>Estabelecimento</th>
+                            <th>Contrato</th>
+                            <th>Fornecedor</th>
+                            <th>Nova Data Fim</th>
+                            <th>Descrição</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.SignatureDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@(item.Contract?.Establishment?.Name ?? "-")</td>
+                                <td>@(item.Contract?.ContractNumber ?? "-")</td>
+                                <td>@(item.Contract?.VendorName ?? "-")</td>
+                                <td>@(item.NewEndDate?.ToString("dd/MM/yyyy") ?? "-")</td>
+                                <td>@item.Description</td>
+                                <td>
+                                    <form asp-action="Revert" method="post" onsubmit="return confirm('Tem certeza que deseja reverter esta renovação? A data de fim do contrato voltará para a data anterior.');">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-xs btn-danger" title="Desfazer Renovação">
+                                            <i class="fas fa-undo"></i> Reverter
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.Any())
+                        {
+                            <tr><td colspan="7" class="text-center text-muted">Nenhuma renovação automática registrada até o momento.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>

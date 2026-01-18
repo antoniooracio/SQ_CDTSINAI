@@ -24,6 +24,7 @@ builder.Services.AddHttpClient<SQ.CDT_SINAI.Web.Services.IRoleService, SQ.CDT_SI
 builder.Services.AddHttpClient<SQ.CDT_SINAI.Web.Services.IPermissionService, SQ.CDT_SINAI.Web.Services.PermissionService>();
 builder.Services.AddHttpClient<SQ.CDT_SINAI.Web.Services.IDocumentRenewalLogService, SQ.CDT_SINAI.Web.Services.DocumentRenewalLogService>();
 builder.Services.AddHttpClient<SQ.CDT_SINAI.Web.Services.IReportService, SQ.CDT_SINAI.Web.Services.ReportService>();
+builder.Services.AddHttpClient<SQ.CDT_SINAI.Web.Services.IContractService, SQ.CDT_SINAI.Web.Services.ContractService>();
 
 // Configuração de Autenticação (Cookie) para o Site
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

@@ -7,6 +7,30 @@
     var currentStatus = ViewData["CurrentStatus"] as DocumentStatus?;
 }
 
+<!-- Summernote CSS -->
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
+
+<style>
+    /* Estilo para Modal em Tela Cheia */
+    .modal-fullscreen {
+        padding: 0 !important;
+    }
+    .modal-fullscreen .modal-dialog {
+        width: 100%;
+        max-width: none;
+        height: 100%;
+        margin: 0;
+    }
+    .modal-fullscreen .modal-content {
+        height: 100%;
+        border: 0;
+        border-radius: 0;
+    }
+    .modal-fullscreen .modal-body {
+        overflow-y: auto;
+    }
+</style>
+
 <section class="content-header">
     <div class="container-fluid">
         <div class="row mb-2">
@@ -90,6 +114,7 @@
                             // Verifica vencimento por data ou status
                             var isExpired = status == DocumentStatus.Expired || (doc?.ExpirationDate.HasValue == true && doc.ExpirationDate < DateTime.Today);
                             var isExempt = status == DocumentStatus.Exempt;
+                            var isPermanent = doc?.IsPermanent ?? false;
 
                             var statusText = status switch {
                                 _ when isExpired => "Vencido",
@@ -114,7 +139,7 @@
                                 <td>@type.ResponsibleArea</td>
                                 <td><span class="badge @statusClass">@statusText</span></td>
                                 <td>@(doc?.EmissionDate?.ToString("dd/MM/yyyy") ?? "-")</td>
-                                <td>@(doc?.ExpirationDate?.ToString("dd/MM/yyyy") ?? "-")</td>
+                                <td>@(isPermanent ? "Permanente" : (doc?.ExpirationDate?.ToString("dd/MM/yyyy") ?? "-"))</td>
                                 <td>
                                     @if (doc != null && !string.IsNullOrEmpty(doc.FilePath))
                                     {
@@ -122,10 +147,17 @@
                                             <i class="fas fa-download"></i> Baixar
                                         </a>
                                     }
+                                    @if (doc != null && !string.IsNullOrEmpty(doc.ContentHtml))
+                                    {
+                                        <button type="button" class="btn btn-xs btn-outline-info" onclick="openReadModal('@type.Name', '#content-storage-@type.Id')">
+                                            <i class="fas fa-book-open"></i> Ler
+                                        </button>
+                                        <div id="content-storage-@type.Id" style="display:none;">@Html.Raw(doc.ContentHtml)</div>
+                                    }
                                 </td>
                                 <td>
                                     <button type="button" class="btn btn-xs btn-primary" 
-                                            onclick="openUploadModal(@type.Id, '@type.Name', '@(doc?.Status)', '@(doc?.EmissionDate?.ToString("yyyy-MM-dd"))', '@(doc?.ExpirationDate?.ToString("yyyy-MM-dd"))', '@doc?.ProtocolNumber', '@doc?.Cost', '@doc?.Justification', @(doc?.AutomaticRenewal.ToString().ToLower() ?? "false"), @(doc?.RenewalMonths ?? 0))">
+                                            onclick="openUploadModal(@type.Id, '@type.Name', '@(doc?.Status)', '@(doc?.EmissionDate?.ToString("yyyy-MM-dd"))', '@(doc?.ExpirationDate?.ToString("yyyy-MM-dd"))', '@doc?.ProtocolNumber', '@doc?.Cost', '@doc?.Justification', @(doc?.AutomaticRenewal.ToString().ToLower() ?? "false"), @(doc?.RenewalMonths ?? 0), @(isPermanent.ToString().ToLower()), '@(doc?.Tags ?? "")', '#content-storage-@type.Id')">
                                         <i class="fas fa-edit"></i> Atualizar
                                     </button>
                                 </td>
@@ -172,6 +204,9 @@
                     <input type="hidden" name="EstablishmentId" value="@Model.Establishment.Id" />
                     <input type="hidden" name="DocumentTypeId" id="docTypeId" />
 
+                    <!-- Input oculto para substituição de imagem no editor -->
+                    <input type="file" id="imageReplaceInput" style="display:none" accept="image/*">
+
                     <div class="row">
                         <div class="col-md-6 form-group">
                             <label>Situação</label>
@@ -197,6 +232,10 @@
                         <div class="col-md-6 form-group">
                             <label>Data de Vencimento</label>
                             <input type="date" name="ExpirationDate" id="docExpiration" class="form-control" />
+                            <div class="custom-control custom-checkbox mt-1">
+                                <input type="checkbox" class="custom-control-input" name="IsPermanent" id="docIsPermanent" value="true">
+                                <label class="custom-control-label" for="docIsPermanent">Documento Permanente (Sem Validade)</label>
+                            </div>
                         </div>
                     </div>
 
@@ -225,6 +264,21 @@
                     </div>
 
                     <div class="form-group">
+                        <label>Tags / Palavras-chave</label>
+                        <input type="text" name="Tags" id="docTags" class="form-control" placeholder="Ex: manual, procedimento, rh, segurança" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            Conteúdo Digital (Bula/Manual) 
+                            <a href="javascript:void(0)" class="ml-2 small" onclick="$('#modal-editor-help').modal('show')">
+                                <i class="fas fa-question-circle"></i> Como copiar da internet?
+                            </a>
+                        </label>
+                        <textarea name="ContentHtml" id="docContentHtml" class="form-control"></textarea>
+                    </div>
+
+                    <div class="form-group">
                         <label>Justificativa (se Isento)</label>
                         <textarea name="Justification" id="docJustification" class="form-control" rows="2"></textarea>
                     </div>
@@ -238,9 +292,96 @@
     </div>
 </div>
 
+<!-- Modal de Leitura -->
+<div class="modal fade" id="modal-read">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h4 class="modal-title" id="readModalTitle">Leitura</h4>
+                <button type="button" class="btn btn-tool ml-auto mr-2" onclick="toggleReadFullScreen()" title="Tela Cheia">
+                    <i class="fas fa-expand-arrows-alt text-white"></i>
+                </button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="readModalBody">
+                <!-- Conteúdo HTML aqui -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Ajuda do Editor -->
+<div class="modal fade" id="modal-editor-help">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title">Como copiar manuais da Internet/Intranet</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h6><b>Método 1: Copiar e Colar (Simples)</b></h6>
+                <ol>
+                    <li>Acesse a página original no seu navegador.</li>
+                    <li>Selecione o conteúdo visualmente com o mouse (ou use <b>Ctrl+A</b> para selecionar tudo).</li>
+                    <li>Copie (<b>Ctrl+C</b>).</li>
+                    <li>Clique dentro do editor deste sistema e Cole (<b>Ctrl+V</b>).</li>
+                </ol>
+
+                <hr>
+
+                <h6><b>Método 2: Via Inspeção (Avançado - Se o site bloquear cópia)</b></h6>
+                <p class="small text-muted">Use este método se o site impedir a seleção de texto.</p>
+                <ol>
+                    <li>Na página original, aperte <b>F12</b> ou clique com botão direito > <b>Inspecionar</b>.</li>
+                    <li>No painel de elementos, encontre a tag que envolve o texto (ex: <code>&lt;div&gt;</code> ou <code>&lt;body&gt;</code>).</li>
+                    <li>Clique com o botão direito na tag > <b>Copy</b> > <b>Copy outerHTML</b>.</li>
+                    <li>No editor deste sistema, clique no botão <b>&lt;/&gt; (Code View)</b> na barra de ferramentas (último botão).</li>
+                    <li>Cole o código HTML copiado.</li>
+                    <li>Clique novamente em <b>&lt;/&gt;</b> para voltar ao modo visual e conferir.</li>
+                </ol>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> <b>Dica sobre o Sumário:</b><br>
+                    Os links do sumário funcionarão corretamente dentro do modo de "Leitura" (botão Ler).
+                </div>
+
+                <div class="alert alert-success">
+                    <i class="fas fa-lightbulb"></i> <b>Novas Funcionalidades:</b><br>
+                    <ul>
+                        <li><b>Tela Cheia:</b> No modo de leitura, use o botão <i class="fas fa-expand-arrows-alt"></i> no canto superior direito para expandir.</li>
+                        <li><b>Ir para o topo:</b> Links com texto "Ir para o topo" rolam automaticamente para o início do documento.</li>
+                        <li><b>Tags:</b> Use o campo de Tags para facilitar a busca futura por palavras-chave.</li>
+                    </ul>
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="icon fas fa-exclamation-triangle"></i> <b>Atenção às Imagens:</b><br>
+                    Se as imagens ficarem quebradas (ex: caminho <code>/sqdasa/...</code>), é porque são links internos do outro sistema.
+                    <br><br>
+                    <b>Solução:</b>
+                    <ul>
+                        <li>Clique na imagem quebrada dentro do editor.</li>
+                        <li>No menu que aparecer, clique no botão <b><i class="fas fa-sync-alt"></i> Substituir</b>.</li>
+                        <li>Selecione a imagem correta do seu computador.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Entendi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
+    <!-- Summernote JS -->
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
     <script>
-        function openUploadModal(typeId, typeName, status, emission, expiration, protocol, cost, justification, autoRenewal, renewalMonths) {
+        function openUploadModal(typeId, typeName, status, emission, expiration, protocol, cost, justification, autoRenewal, renewalMonths, isPermanent, tags, contentSelector) {
             $('#docTypeId').val(typeId);
             $('#modalTitle').text('Atualizar: ' + typeName);
             
@@ -261,10 +402,129 @@
             
             $('#docAutoRenewal').prop('checked', autoRenewal);
             $('#docRenewalMonths').val(renewalMonths);
+            $('#docTags').val(tags);
+            
+            // Lógica Permanente
+            $('#docIsPermanent').prop('checked', isPermanent);
+            toggleExpiration();
+
+            // Carregar HTML no Summernote
+            var htmlContent = $(contentSelector).html();
+            $('#docContentHtml').summernote('code', htmlContent || '');
 
             $('#modal-upload').modal('show');
         }
+
+        function openReadModal(title, contentSelector) {
+            $('#readModalTitle').text(title);
+            $('#readModalBody').html($(contentSelector).html());
+            $('#modal-read').modal('show');
+        }
+
+        function toggleReadFullScreen() {
+            $('#modal-read').toggleClass('modal-fullscreen');
+        }
+
+        function toggleExpiration() {
+            if($('#docIsPermanent').is(':checked')) {
+                $('#docExpiration').prop('disabled', true).val('');
+            } else {
+                $('#docExpiration').prop('disabled', false);
+            }
+        }
+
+        // Botão Customizado para Substituir Imagem
+        var ReplaceImageButton = function (context) {
+            var ui = $.summernote.ui;
+            var button = ui.button({
+                contents: '<i class="fas fa-sync-alt"/> Substituir',
+                tooltip: 'Substituir Imagem Selecionada',
+                click: function () {
+                    var $target = null;
+
+                    // 1. Tenta recuperar do armazenamento interno do Summernote (onde a lixeira busca)
+                    if (context.layoutInfo && context.layoutInfo.editable) {
+                        $target = $(context.layoutInfo.editable.data('target'));
+                    }
+
+                    // 2. Tenta pegar pelo módulo imagePopover (algumas versões)
+                    if ((!$target || !$target.length) && context.modules.imagePopover && context.modules.imagePopover.latestImage) {
+                        $target = $(context.modules.imagePopover.latestImage);
+                    }
+                    
+                    // 3. Fallback para nossa variável global
+                    if ((!$target || !$target.length) && window.currentImageTarget) {
+                        $target = window.currentImageTarget;
+                    }
+                    
+                    if ($target && $target.length) {
+                        window.currentImageTarget = $target;
+                        // Usa o clique nativo do DOM para garantir que o diálogo abra
+                        document.getElementById('imageReplaceInput').click();
+                    } else {
+                        // Fallback caso não encontre (ex: seleção manual)
+                        alert("Não foi possível identificar a imagem. Tente clicar nela novamente.");
+                    }
+                }
+            });
+            return button.render();
+        }
+
         $(document).ready(function(){
+            // Configuração do Input de Substituição de Imagem
+            $('#imageReplaceInput').on('change', function() {
+                var file = this.files[0];
+                if (file && window.currentImageTarget) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        // Atualiza o src da imagem selecionada
+                        $(window.currentImageTarget).attr('src', e.target.result);
+                        // Reseta float se necessário para evitar sobreposição
+                        // $(window.currentImageTarget).css('float', 'none'); 
+                    };
+                    reader.readAsDataURL(file);
+                }
+                $(this).val(''); // Reseta o input para permitir selecionar o mesmo arquivo novamente
+            });
+
+            // Inicializa Summernote
+            $('#docContentHtml').summernote({
+                height: 400, // Aumentado para facilitar edição de manuais longos
+                lang: 'pt-BR',
+                toolbar: [
+                    ['style', ['bold', 'italic', 'underline', 'clear']],
+                    ['font', ['strikethrough', 'superscript', 'subscript', 'fontname', 'fontsize']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['insert', ['link', 'picture', 'table']],
+                    ['view', ['fullscreen', 'codeview']]
+                ],
+                callbacks: {
+                    onInit: function() {
+                        // Captura o clique em imagens para garantir que temos a referência correta para substituição
+                        var $editable = $(this).next('.note-editor').find('.note-editable');
+                        $editable.on('mousedown click', 'img', function () {
+                            window.currentImageTarget = $(this);
+                            // Força o registro no Summernote também, para garantir
+                            $editable.data('target', $(this));
+                        });
+                    }
+                },
+                popover: {
+                    image: [
+                        ['custom', ['imageReplace']],
+                        ['imagesize', ['imageSize100', 'imageSize50', 'imageSize25']],
+                        ['float', ['floatLeft', 'floatRight', 'floatNone']],
+                        ['remove', ['removeMedia']]
+                    ]
+                },
+                buttons: {
+                    imageReplace: ReplaceImageButton
+                }
+            });
+
+            $('#docIsPermanent').change(toggleExpiration);
+
             // Máscara de Moeda
             $('.mask-money').on('input', function() {
                 var value = $(this).val().replace(/\D/g, '');
@@ -280,12 +540,48 @@
 
             // Limpar formatação ao enviar para garantir que o backend receba um decimal válido (ex: 1234.56)
             $('form').on('submit', function() {
+                // Força a sincronização do conteúdo do Summernote para o textarea antes de enviar
+                if ($('#docContentHtml').summernote('isEmpty')) {
+                    $('#docContentHtml').val('');
+                } else {
+                    $('#docContentHtml').val($('#docContentHtml').summernote('code'));
+                }
+
                 var costInput = $('#docCost');
                 var value = costInput.val();
                 if (value) {
                     // Remove R$, pontos e troca vírgula por ponto
                     var cleanValue = value.replace("R$ ", "").replace(/\./g, "").replace(",", ".");
                     costInput.val(cleanValue);
+                }
+            });
+
+            // Correção para navegação de Âncoras (Sumário) e "Ir para o topo" dentro do Modal de Leitura
+            $('#readModalBody').on('click', 'a[href^="#"]', function(e) {
+                e.preventDefault();
+                var $container = $('#readModalBody'); // O container com scroll
+                var linkText = $(this).text().trim().toLowerCase();
+                var targetId = $(this).attr('href').substring(1); // Remove o #
+                
+                // Lógica "Ir para o topo"
+                if (linkText.includes('ir para o topo') || targetId === '' || targetId === 'top') {
+                    $container.animate({ scrollTop: 0 }, 500);
+                    return;
+                }
+
+                // Procura o elemento alvo dentro do corpo do modal pelo ID
+                // Usamos [id="..."] para garantir que IDs numéricos funcionem corretamente
+                var $target = $container.find('[id="' + targetId + '"]');
+
+                if ($target.length) {
+                    var $container = $('#readModalBody'); // O container com scroll
+                    
+                    // Calcula a posição relativa dentro do container
+                    var scrollTop = $target.offset().top - $container.offset().top + $container.scrollTop();
+                    
+                    $container.animate({
+                        scrollTop: scrollTop - 20 // Deixa uma margem de 20px no topo
+                    }, 500);
                 }
             });
         });

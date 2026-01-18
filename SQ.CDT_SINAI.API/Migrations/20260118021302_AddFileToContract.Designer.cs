@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SQ.CDT_SINAI.API.Data;
 
@@ -11,9 +12,11 @@ using SQ.CDT_SINAI.API.Data;
 namespace SQ.CDT_SINAI.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260118021302_AddFileToContract")]
+    partial class AddFileToContract
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -247,9 +250,6 @@ namespace SQ.CDT_SINAI.API.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("AutomaticRenewal")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<string>("ContractNumber")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -272,9 +272,6 @@ namespace SQ.CDT_SINAI.API.Migrations
                     b.Property<string>("ObjectDescription")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<int>("RenewalMonths")
-                        .HasColumnType("int");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime(6)");
