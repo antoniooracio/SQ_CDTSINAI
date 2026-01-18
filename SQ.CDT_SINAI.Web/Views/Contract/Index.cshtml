@@ -1,8 +1,15 @@
 @model List<SQ.CDT_SINAI.Shared.Models.Contract>
 @using SQ.CDT_SINAI.Shared.Models
+@using System.Security.Claims
+@inject SQ.CDT_SINAI.Web.Services.IPermissionService PermissionService
 @{
     ViewData["Title"] = "Gestão de Contratos";
     var establishment = ViewBag.Establishment as Establishment;
+    var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+    var canCreate = await PermissionService.HasPermissionAsync(userRole, "Contract", "Create");
+    var canEdit = await PermissionService.HasPermissionAsync(userRole, "Contract", "Edit");
+    var currentType = ViewData["CurrentType"] as ContractType?;
+    var currentSearch = ViewData["CurrentSearch"] as string;
 }
 
 <section class="content-header">
@@ -13,9 +20,15 @@
                 <small>@establishment?.Name - @establishment?.Regional</small>
             </div>
             <div class="col-sm-6 text-right">
-                <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modal-create">
-                    <i class="fas fa-plus"></i> Novo Contrato
-                </button>
+                <a asp-action="GenerateReport" asp-route-establishmentId="@establishment?.Id" target="_blank" class="btn btn-danger mr-2">
+                    <i class="fas fa-file-pdf"></i> Gerar Relatório
+                </a>
+                @if (canCreate)
+                {
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modal-create">
+                        <i class="fas fa-plus"></i> Novo Contrato
+                    </button>
+                }
                 <a asp-controller="Establishment" asp-action="Index" class="btn btn-default">
                     <i class="fas fa-arrow-left"></i> Voltar
                 </a>
@@ -27,6 +40,27 @@
 <section class="content">
     <div class="container-fluid">
         
+        <!-- Filtro -->
+        <div class="card card-default">
+            <div class="card-body py-2">
+                <form method="get" class="form-inline">
+                    <input type="hidden" name="establishmentId" value="@establishment?.Id" />
+                    
+                    <label class="mr-2">Filtrar por Tipo:</label>
+                    <select name="type" class="form-control mr-2" onchange="this.form.submit()">
+                        <option value="">- Todos -</option>
+                        @foreach (var item in Html.GetEnumSelectList<ContractType>()) {
+                            <!option value="@item.Value" @(currentType?.ToString() == item.Value ? "selected" : "")>@item.Text</!option>
+                        }
+                    </select>
+
+                    <label class="mr-2 ml-3">Buscar:</label>
+                    <input type="text" name="search" class="form-control mr-2" placeholder="Nº, Fornecedor, Objeto..." value="@currentSearch" style="width: 250px;">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+                </form>
+            </div>
+        </div>
+
         @if (TempData["Success"] != null)
         {
             <div class="alert alert-success alert-dismissible">
@@ -50,6 +84,8 @@
                     <thead>
                         <tr>
                             <th>Número</th>
+                            <th>Tipo</th>
+                            <th>Pagamento</th>
                             <th>Fornecedor</th>
                             <th>Objeto</th>
                             <th>Vigência</th>
@@ -63,6 +99,22 @@
                         {
                             <tr>
                                 <td>@item.ContractNumber</td>
+                                <td>
+                                    @switch(item.Type) {
+                                        case ContractType.Service: <span class="badge badge-info">Serviço</span>; break;
+                                        case ContractType.Lease: <span class="badge badge-warning">Locação</span>; break;
+                                        case ContractType.Maintenance: <span class="badge badge-secondary">Manutenção</span>; break;
+                                        default: <span class="badge badge-light">Outros</span>; break;
+                                    }
+                                </td>
+                                <td>
+                                    @switch(item.PaymentFrequency) {
+                                        case PaymentFrequency.Monthly: <span class="badge badge-primary">Mensal</span>; break;
+                                        case PaymentFrequency.Single: <span class="badge badge-success">Único</span>; break;
+                                        case PaymentFrequency.Installments: <span class="badge badge-warning">Parcelado (@(item.InstallmentCount ?? 0)x)</span>; break;
+                                        default: <span class="badge badge-secondary">Indefinido</span>; break;
+                                    }
+                                </td>
                                 <td>@item.VendorName</td>
                                 <td>@item.ObjectDescription</td>
                                 <td>@item.StartDate.ToString("dd/MM/yyyy") a @item.EndDate.ToString("dd/MM/yyyy")</td>
@@ -74,6 +126,12 @@
                                     else { <span class="badge badge-warning">Rascunho</span> }
                                 </td>
                                 <td>
+                                    @if (canEdit)
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning" title="Editar Contrato">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    }
                                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">
                                         <i class="fas fa-eye"></i> Detalhes
                                     </a>
@@ -82,7 +140,7 @@
                         }
                         @if (!Model.Any())
                         {
-                            <tr><td colspan="7" class="text-center text-muted">Nenhum contrato cadastrado.</td></tr>
+                            <tr><td colspan="8" class="text-center text-muted">Nenhum contrato cadastrado.</td></tr>
                         }
                     </tbody>
                 </table>
@@ -103,21 +161,62 @@
             </div>
             <form asp-action="Create" method="post" enctype="multipart/form-data">
                 <input type="hidden" name="EstablishmentId" value="@establishment?.Id" />
+                
+                @if (!ViewData.ModelState.IsValid && ViewBag.ShowCreateModal == true)
+                {
+                    <div class="alert alert-danger mx-3 mt-3">
+                        <div asp-validation-summary="All" class="text-white"></div>
+                    </div>
+                }
+
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-6 form-group"><label>Número do Contrato</label><input type="text" name="ContractNumber" class="form-control" required /></div>
-                        <div class="col-md-6 form-group"><label>Fornecedor</label><input type="text" name="VendorName" class="form-control" required /></div>
+                        <div class="col-md-6 form-group">
+                            <label>Número do Contrato</label>
+                            <input type="text" name="ContractNumber" class="form-control" required data-val="true" data-val-required="O número do contrato é obrigatório." />
+                            <span class="text-danger field-validation-valid" data-valmsg-for="ContractNumber" data-valmsg-replace="true"></span>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Tipo</label>
+                            <select name="Type" class="form-control" asp-items="Html.GetEnumSelectList<ContractType>()" required data-val="true" data-val-required="O tipo de contrato é obrigatório."></select>
+                            <span class="text-danger field-validation-valid" data-valmsg-for="Type" data-valmsg-replace="true"></span>
+                        </div>
                     </div>
-                    <div class="form-group"><label>Objeto do Contrato</label><textarea name="ObjectDescription" class="form-control" rows="2"></textarea></div>
+                    <div class="form-group">
+                        <label>Fornecedor</label>
+                        <input type="text" name="VendorName" class="form-control" required data-val="true" data-val-required="O fornecedor é obrigatório." />
+                        <span class="text-danger field-validation-valid" data-valmsg-for="VendorName" data-valmsg-replace="true"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>Objeto do Contrato</label>
+                        <textarea name="ObjectDescription" class="form-control" rows="2" required data-val="true" data-val-required="A descrição do objeto é obrigatória."></textarea>
+                        <span class="text-danger field-validation-valid" data-valmsg-for="ObjectDescription" data-valmsg-replace="true"></span>
+                    </div>
                     <div class="row">
-                        <div class="col-md-4 form-group"><label>Data Início</label><input type="date" name="StartDate" class="form-control" required /></div>
-                        <div class="col-md-4 form-group"><label>Data Fim</label><input type="date" name="EndDate" class="form-control" required /></div>
+                        <div class="col-md-4 form-group"><label>Data Início</label><input type="date" name="StartDate" class="form-control" required data-val="true" data-val-required="A data de início é obrigatória." /></div>
+                        <div class="col-md-4 form-group"><label>Data Fim</label><input type="date" name="EndDate" class="form-control" required data-val="true" data-val-required="A data de fim é obrigatória." /></div>
+                        <div class="col-md-4 form-group"><label>Frequência Pagto</label>
+                            <select name="PaymentFrequency" id="paymentFrequency" class="form-control" asp-items="Html.GetEnumSelectList<PaymentFrequency>()"></select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 form-group" id="divInstallments" style="display:none;">
+                            <label>Qtd Parcelas</label>
+                            <input type="number" name="InstallmentCount" class="form-control" min="2" placeholder="Ex: 3" />
+                        </div>
                         <div class="col-md-4 form-group">
-                            <label>Valor Mensal</label>
+                            <label id="lblValue">Valor Mensal</label>
                             <div class="input-group">
                                 <div class="input-group-prepend"><span class="input-group-text">R$</span></div>
-                                <input type="text" name="MonthlyValue" class="form-control mask-money" placeholder="0,00" required />
+                                <input type="text" name="MonthlyValue" class="form-control mask-money" placeholder="0,00" required data-val="true" data-val-required="O valor mensal é obrigatório." />
                             </div>
+                            <span class="text-danger field-validation-valid" data-valmsg-for="MonthlyValue" data-valmsg-replace="true"></span>
+                        </div>
+                        <div class="col-md-4 form-group" id="divTotalValue" style="display:none;">
+                            <label>Valor Total Contrato</label>
+                            <div class="input-group"><div class="input-group-prepend"><span class="input-group-text">R$</span></div>
+                            <input type="text" name="TotalContractValue" class="form-control mask-money" placeholder="0,00" /></div>
                         </div>
                     </div>
                     <div class="row">
@@ -129,7 +228,7 @@
                         </div>
                         <div class="col-md-6 form-group">
                             <label>Meses para Renovação</label>
-                            <input type="number" name="RenewalMonths" class="form-control" min="1" placeholder="Ex: 12" />
+                            <input type="number" name="RenewalMonths" class="form-control" min="0" placeholder="Ex: 12" />
                         </div>
                     </div>
                     <div class="form-group">
@@ -147,10 +246,30 @@
 </div>
 
 @section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
         $(document).ready(function () {
             // Máscara de Moeda
             $('.mask-money').mask('#.##0,00', {reverse: true});
+
+            // Lógica de Exibição dos Campos de Pagamento
+            $('#paymentFrequency').change(function() {
+                var val = $(this).val();
+                // 1=Monthly, 2=Single, 3=Installments
+                if (val == '1') { // Mensal
+                    $('#lblValue').text('Valor Mensal');
+                    $('#divInstallments').hide();
+                    $('#divTotalValue').hide();
+                } else if (val == '2') { // Único
+                    $('#lblValue').text('Valor Único');
+                    $('#divInstallments').hide();
+                    $('#divTotalValue').hide(); // O valor único já é o total
+                } else if (val == '3') { // Parcelado
+                    $('#lblValue').text('Valor da Parcela');
+                    $('#divInstallments').show();
+                    $('#divTotalValue').show();
+                }
+            });
 
             // Limpar formatação ao enviar
             $('form').on('submit', function() {
@@ -163,6 +282,11 @@
                     }
                 });
             });
+
+            // Reabrir modal se houver erro de validação
+            @if (ViewBag.ShowCreateModal == true) {
+                <text>$('#modal-create').modal('show');</text>
+            }
         });
     </script>
 }

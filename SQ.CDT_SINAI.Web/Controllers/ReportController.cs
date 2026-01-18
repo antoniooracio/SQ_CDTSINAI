@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SQ.CDT_SINAI.Shared.DTOs;
+using SQ.CDT_SINAI.Shared.Models;
 using SQ.CDT_SINAI.Web.Services;
 using SQ.CDT_SINAI.Web.Models.ViewModels;
 using System;
@@ -13,13 +14,15 @@ namespace SQ.CDT_SINAI.Web.Controllers
         private readonly ILegalizationService _legalizationService;
         private readonly IEstablishmentService _establishmentService;
         private readonly IBrandService _brandService;
+        private readonly IContractService _contractService;
 
-        public ReportController(IReportService reportService, ILegalizationService legalizationService, IEstablishmentService establishmentService, IBrandService brandService)
+        public ReportController(IReportService reportService, IIncidentService incidentService, IEstablishmentService establishmentService, IBrandService brandService, ILegalizationService legalizationService, IContractService contractService)
         {
             _reportService = reportService;
             _legalizationService = legalizationService;
             _establishmentService = establishmentService;
             _brandService = brandService;
+            _contractService = contractService;
         }
 
         public IActionResult Index()
@@ -53,6 +56,24 @@ namespace SQ.CDT_SINAI.Web.Controllers
             ViewBag.Establishments = (await _establishmentService.GetAllAsync(1, 1000)).Items;
             ViewBag.Brands = (await _brandService.GetAllAsync(1, 1000)).Items;
 
+            return View(model);
+        }
+
+                public async Task<IActionResult> Contract()
+        {
+            ViewBag.Establishments = (await _establishmentService.GetAllAsync(1, 1000)).Items;
+            ViewBag.Brands = (await _brandService.GetAllAsync(1, 1000)).Items;
+            return View(new ContractReportViewModel());
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Contract(ContractReportViewModel model)
+        {
+            ViewBag.Establishments = (await _establishmentService.GetAllAsync(1, 1000)).Items;
+            ViewBag.Brands = (await _brandService.GetAllAsync(1, 1000)).Items;
+            
+            model.Result = await _contractService.GetReportDataAsync(model.Filter);
+            
             return View(model);
         }
     }

@@ -37,7 +37,13 @@ namespace SQ.CDT_SINAI.Web.Controllers
             ("Incident", "Respond", "Ocorrências - Responder"),
             
             ("Legalization", "View", "Legalização - Visualizar"),
-            ("Legalization", "Upload", "Legalização - Upload/Editar")
+            ("Legalization", "Upload", "Legalização - Upload/Editar"),
+
+            ("Contract", "View", "Contratos - Visualizar"),
+            ("Contract", "Create", "Contratos - Criar"),
+            ("Contract", "Edit", "Contratos - Editar/Aditivar"),
+            ("ContractRenewalLog", "View", "Hist. Renov. Contratos - Visualizar"),
+            ("ContractRenewalLog", "Revert", "Hist. Renov. Contratos - Reverter")
         };
 
         public async Task<IActionResult> Index()

@@ -213,11 +213,13 @@ A primeira migration já insere um usuário administrador para acesso inicial ao
 
 ### v1.7 - Gestão de Contratos e Aditivos (Atual)
 - **Contratos:** Cadastro de contratos com controle de vigência, valores e fornecedores.
+- **Financeiro:** Suporte a múltiplas frequências de pagamento (Mensal, Único, Parcelado). O sistema calcula o fluxo de caixa mensal estimado considerando apenas parcelas ativas e custos recorrentes.
 - **Aditivos:** Gestão de alterações contratuais (Prazo, Valor, Escopo) com linha do tempo visual (Timeline).
+- **Edição Completa:** Funcionalidade para corrigir dados contratuais e alterar status manualmente (Vigente, Rascunho, Cancelado).
 - **Arquivos:** Upload de PDFs para contratos originais e aditivos.
 - **Renovação Automática:** Worker Service dedicado para renovação de contratos.
 - **Auditoria:** Histórico de renovações com filtros (Data, Texto) e funcionalidade de **Reverter**.
-- **Dashboard:** Novos alertas de vencimento para contratos e card de Valor Mensal Total.
+- **Relatórios:** Geração de PDF por unidade e Dashboard Gerencial com gráficos (Chart.js) por Tipo, Status e Regional, separando custos recorrentes (OPEX) de investimentos pontuais (CAPEX).
 
 ### Lógica do Relatório de Legalização
 O relatório de documentos legais segue uma lógica "inteligente". Ele exibe apenas os documentos que são **obrigatórios** (configurados no Tipo de Estabelecimento) para as unidades filtradas.
@@ -258,6 +260,22 @@ Define as opções utilizadas nos formulários de abertura e filtro de ocorrênc
 | `ContractStatus` | Status (Vigente, Vencido, Cancelado...) | `Contract/Index.cshtml`<br>`Contract/Details.cshtml` |
 | `AmendmentType` | Tipo de Aditivo (Prazo, Valor, Escopo...) | `Contract/Details.cshtml` |
 
+## 11. Diretrizes de Desenvolvimento (Regras de Negócio)
+
+### Controle de Acesso por Filiais e Regionais
+O sistema opera em um contexto de múltiplas filiais (Estabelecimentos).
+- **Administrador:** Possui acesso irrestrito a todas as filiais e dados globais.
+- **Coordenador/Colaborador:** O acesso é restrito estritamente aos Estabelecimentos aos quais o usuário está vinculado.
+  - Mesmo que a navegação na interface sugira que o acesso é feito via Estabelecimento, a API deve **sempre** validar se o usuário tem permissão para aquele ID de estabelecimento específico, prevenindo acesso indevido via manipulação de URL (IDOR).
+  - Dashboards e Relatórios devem totalizar apenas os dados dos estabelecimentos permitidos ao usuário logado.
+
+### Padrão de Permissões (Matriz)
+Todo novo módulo desenvolvido deve ser registrado na Matriz de Permissões para garantir o controle de acesso granular.
+1.  **Registro no Seed:** Adicione as entradas na tabela `RolePermissions` dentro do `AppDbContext.cs`.
+2.  **Nomenclatura:**
+    - `Module`: Nome do Controller ou Entidade (ex: `Contract`, `ContractRenewalLog`).
+    - `Action`: Ação específica (ex: `View`, `Create`, `Edit`, `Revert`).
+3.  **Aplicação:** Utilize os filtros de permissão nos Controllers para validar se o usuário possui a permissão cadastrada antes de executar a ação.
 ## 9. Publicação e Deploy (Produção)
 
 Para publicar o sistema em um servidor de produção (IIS, Linux com Nginx, ou Docker), siga os passos abaixo para gerar os arquivos compilados.

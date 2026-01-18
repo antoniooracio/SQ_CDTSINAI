@@ -50,6 +50,13 @@ namespace SQ.CDT_SINAI.API.Data
                 new RolePermission { Id = 2, RoleId = 2, Module = "Collaborator", Action = "Create" },
                 new RolePermission { Id = 3, RoleId = 2, Module = "Collaborator", Action = "Edit" },
                 new RolePermission { Id = 4, RoleId = 2, Module = "Establishment", Action = "View" },
+
+                // Permissões de Contratos (Novos Módulos)
+                new RolePermission { Id = 5, RoleId = 2, Module = "Contract", Action = "View" },
+                new RolePermission { Id = 6, RoleId = 2, Module = "Contract", Action = "Create" },
+                new RolePermission { Id = 7, RoleId = 2, Module = "Contract", Action = "Edit" },
+                new RolePermission { Id = 8, RoleId = 2, Module = "ContractRenewalLog", Action = "View" },
+                new RolePermission { Id = 9, RoleId = 2, Module = "ContractRenewalLog", Action = "Revert" },
                 
                 // Colaborador (Exemplo)
                 new RolePermission { Id = 10, RoleId = 3, Module = "Collaborator", Action = "View" }

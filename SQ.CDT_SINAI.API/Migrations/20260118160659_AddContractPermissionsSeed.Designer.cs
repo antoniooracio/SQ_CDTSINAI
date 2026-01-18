@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SQ.CDT_SINAI.API.Data;
 
@@ -11,9 +12,11 @@ using SQ.CDT_SINAI.API.Data;
 namespace SQ.CDT_SINAI.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260118160659_AddContractPermissionsSeed")]
+    partial class AddContractPermissionsSeed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -266,18 +269,12 @@ namespace SQ.CDT_SINAI.API.Migrations
                     b.Property<string>("FilePath")
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("InstallmentCount")
-                        .HasColumnType("int");
-
                     b.Property<decimal>("MonthlyValue")
                         .HasColumnType("decimal(65,30)");
 
                     b.Property<string>("ObjectDescription")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<int>("PaymentFrequency")
-                        .HasColumnType("int");
 
                     b.Property<int>("RenewalMonths")
                         .HasColumnType("int");
@@ -286,12 +283,6 @@ namespace SQ.CDT_SINAI.API.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<decimal?>("TotalContractValue")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<int>("Type")
                         .HasColumnType("int");
 
                     b.Property<string>("VendorName")

@@ -1,8 +1,15 @@
 @model SQ.CDT_SINAI.Shared.DTOs.PaginatedResult<SQ.CDT_SINAI.Shared.Models.Establishment>
 @using SQ.CDT_SINAI.Shared.Models
+@using System.Security.Claims
+@inject SQ.CDT_SINAI.Web.Services.IPermissionService PermissionService
 
 @{
     ViewData["Title"] = "Lista de Estabelecimentos";
+    var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+    var canCreate = await PermissionService.HasPermissionAsync(userRole, "Establishment", "Create");
+    var canEdit = await PermissionService.HasPermissionAsync(userRole, "Establishment", "Edit");
+    var canViewLegalization = await PermissionService.HasPermissionAsync(userRole, "Legalization", "View");
+    var canViewContracts = await PermissionService.HasPermissionAsync(userRole, "Contract", "View");
 }
 
 <section class="content-header">
@@ -15,9 +22,12 @@
                 <a asp-controller="Home" asp-action="Index" class="btn btn-default mr-1">
                     <i class="fas fa-arrow-left"></i> Voltar ao menu
                 </a>
-                <a asp-action="Create" class="btn btn-success mr-1">
-                    <i class="fas fa-plus"></i> Adicionar novo registro
-                </a>
+                @if (canCreate)
+                {
+                    <a asp-action="Create" class="btn btn-success mr-1">
+                        <i class="fas fa-plus"></i> Adicionar novo registro
+                    </a>
+                }
                 <button type="button" class="btn btn-secondary" disabled title="Funcionalidade futura">
                     <i class="fas fa-archive"></i> Ver inativos
                 </button>
@@ -173,15 +183,24 @@
                                         <span class="badge badge-info">@item.Regional</span>
                                     </td>
                                     <td class="text-center">
-                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a asp-action="Legalization" asp-route-id="@item.Id" class="btn btn-sm btn-primary" title="Documentos">
-                                            <i class="fas fa-file-contract"></i>
-                                        </a>
-                                        <a asp-controller="Contract" asp-action="Index" asp-route-establishmentId="@item.Id" class="btn btn-sm btn-secondary" title="Contratos">
-                                            <i class="fas fa-handshake"></i>
-                                        </a>
+                                        @if (canEdit)
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        }
+                                        @if (canViewLegalization)
+                                        {
+                                            <a asp-action="Legalization" asp-route-id="@item.Id" class="btn btn-sm btn-primary" title="Documentos">
+                                                <i class="fas fa-file-contract"></i>
+                                            </a>
+                                        }
+                                        @if (canViewContracts)
+                                        {
+                                            <a asp-controller="Contract" asp-action="Index" asp-route-establishmentId="@item.Id" class="btn btn-sm btn-secondary" title="Contratos">
+                                                <i class="fas fa-handshake"></i>
+                                            </a>
+                                        }
                                         <button class="btn btn-sm btn-danger" title="Remover (Em breve)">
                                             <i class="fas fa-trash"></i>
                                         </button>

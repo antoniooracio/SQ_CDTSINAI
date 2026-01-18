@@ -1,0 +1,176 @@
+@model SQ.CDT_SINAI.Web.Models.ViewModels.ContractReportViewModel
+@using SQ.CDT_SINAI.Shared.Models
+
+@{
+    ViewData["Title"] = "Relatório de Contratos";
+}
+<!-- Select2 CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css" />
+
+<section class="content-header">
+    <div class="container-fluid">
+        <h1>Relatório de Contratos</h1>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-filter mr-1"></i> Filtros</h3>
+            </div>
+            <form asp-action="Contract" method="post">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Estabelecimento</label>
+                            <select asp-for="Filter.EstablishmentIds" class="form-control select2" multiple="multiple" asp-items="@(new SelectList(ViewBag.Establishments, "Id", "Name"))" style="width: 100%;">
+                            </select>
+                            <small class="text-muted">Deixe vazio para selecionar todos.</small>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Marca</label>
+                            <select asp-for="Filter.BrandIds" class="form-control select2" multiple="multiple" asp-items="@(new SelectList(ViewBag.Brands, "Id", "Name"))" style="width: 100%;">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 form-group">
+                            <label>Regional</label>
+                            <input asp-for="Filter.Regional" class="form-control" placeholder="Ex: SP, RJ" />
+                        </div>
+                        <div class="col-md-3 form-group">
+                            <label>Tipo de Contrato</label>
+                            <select asp-for="Filter.Types" class="form-control select2" multiple="multiple" asp-items="Html.GetEnumSelectList<ContractType>()" style="width: 100%;"></select>
+                        </div>
+                        <div class="col-md-3 form-group">
+                            <label>Status</label>
+                            <select asp-for="Filter.Statuses" class="form-control select2" multiple="multiple" asp-items="Html.GetEnumSelectList<ContractStatus>()" style="width: 100%;"></select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 form-group">
+                            <label>Início Vigência (De)</label>
+                            <input asp-for="Filter.StartDate" type="date" class="form-control" />
+                        </div>
+                        <div class="col-md-3 form-group">
+                            <label>Início Vigência (Até)</label>
+                            <input asp-for="Filter.EndDate" type="date" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-right">
+                    <button type="submit" class="btn btn-success"><i class="fas fa-chart-bar mr-1"></i> Gerar Gráficos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+@if (Model.Result != null)
+{
+    <section class="content">
+        <div class="container-fluid">
+            
+            <div class="row mb-3">
+                <div class="col-md-4 col-sm-6 col-12">
+                    <div class="info-box shadow-sm">
+                        <span class="info-box-icon bg-info"><i class="fas fa-file-contract"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Contratos Encontrados</span>
+                            <span class="info-box-number">@Model.Result.TotalContractsFound</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 col-12">
+                    <div class="info-box shadow-sm">
+                        <span class="info-box-icon bg-success"><i class="fas fa-sync-alt"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Mensal Recorrente (Ativos)</span>
+                            <span class="info-box-number">@Model.Result.TotalRecurringValue.ToString("C2")</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6 col-12">
+                    <div class="info-box shadow-sm">
+                        <span class="info-box-icon bg-warning"><i class="fas fa-hand-holding-usd"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Total Pontual/Parcelado (Ativos)</span>
+                            <span class="info-box-number">@Model.Result.TotalNonRecurringValue.ToString("C2")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card card-primary card-outline">
+                        <div class="card-header">
+                            <h3 class="card-title">Contratos por Tipo e Status</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="typeChart" style="min-height: 400px; height: 400px; max-height: 400px; max-width: 100%;"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card card-info card-outline">
+                        <div class="card-header">
+                            <h3 class="card-title">Valores por Regional (Ativos)</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="regionalChart" style="min-height: 400px; height: 400px; max-height: 400px; max-width: 100%;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.full.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.select2').select2({ theme: "bootstrap", placeholder: "Selecione...", allowClear: true });
+        });
+
+        @if (Model.Result != null && Model.Result.ContractsByType.Labels.Count > 0)
+        {
+            <text>
+            function createStackedChart(id, chartData, orientation) {
+                var ctx = document.getElementById(id).getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartData.Labels,
+                        datasets: chartData.Datasets.map(ds => ({
+                            label: ds.Label,
+                            data: ds.Data,
+                            backgroundColor: ds.BackgroundColor
+                        }))
+                    },
+                    options: {
+                        indexAxis: orientation,
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { x: { stacked: true }, y: { stacked: true } },
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+
+            $(function () {
+                var typeData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Result.ContractsByType));
+                createStackedChart('typeChart', typeData, 'x');
+
+                var regionalData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Result.ContractsByRegional));
+                createStackedChart('regionalChart', regionalData, 'y');
+            });
+            </text>
+        }
+    </script>
+}

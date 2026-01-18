@@ -1,6 +1,10 @@
 @model List<SQ.CDT_SINAI.Shared.Models.ContractAmendment>
+@using System.Security.Claims
+@inject SQ.CDT_SINAI.Web.Services.IPermissionService PermissionService
 @{
     ViewData["Title"] = "Histórico de Renovações de Contratos";
+    var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+    var canRevert = await PermissionService.HasPermissionAsync(userRole, "ContractRenewalLog", "Revert");
 }
 
 <section class="content-header">
@@ -84,12 +88,15 @@
                                 <td>@(item.NewEndDate?.ToString("dd/MM/yyyy") ?? "-")</td>
                                 <td>@item.Description</td>
                                 <td>
-                                    <form asp-action="Revert" method="post" onsubmit="return confirm('Tem certeza que deseja reverter esta renovação? A data de fim do contrato voltará para a data anterior.');">
-                                        <input type="hidden" name="id" value="@item.Id" />
-                                        <button type="submit" class="btn btn-xs btn-danger" title="Desfazer Renovação">
-                                            <i class="fas fa-undo"></i> Reverter
-                                        </button>
-                                    </form>
+                                    @if (canRevert)
+                                    {
+                                        <form asp-action="Revert" method="post" onsubmit="return confirm('Tem certeza que deseja reverter esta renovação? A data de fim do contrato voltará para a data anterior.');">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" class="btn btn-xs btn-danger" title="Desfazer Renovação">
+                                                <i class="fas fa-undo"></i> Reverter
+                                            </button>
+                                        </form>
+                                    }
                                 </td>
                             </tr>
                         }

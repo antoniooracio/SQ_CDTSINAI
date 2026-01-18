@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using SQ.CDT_SINAI.Web.Attributes;
 using SQ.CDT_SINAI.Web.Services;
 using System.Threading.Tasks;
 
@@ -13,6 +14,7 @@ namespace SQ.CDT_SINAI.Web.Controllers
             _contractService = contractService;
         }
 
+        [RequiresPermission("ContractRenewalLog", "View")]
         public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate, string? search)
         {
             var history = await _contractService.GetRenewalHistoryAsync(startDate, endDate, search);
@@ -23,6 +25,7 @@ namespace SQ.CDT_SINAI.Web.Controllers
         }
 
         [HttpPost]
+        [RequiresPermission("ContractRenewalLog", "Revert")]
         public async Task<IActionResult> Revert(int id)
         {
             var error = await _contractService.RevertRenewalAsync(id);

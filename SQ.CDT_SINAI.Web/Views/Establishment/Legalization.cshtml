@@ -1,10 +1,14 @@
 @model SQ.CDT_SINAI.Web.Models.ViewModels.EstablishmentLegalizationViewModel
 @using SQ.CDT_SINAI.Shared.Models
+@using System.Security.Claims
+@inject SQ.CDT_SINAI.Web.Services.IPermissionService PermissionService
 
 @{
     ViewData["Title"] = "Gestão de Documentos";
     var currentSearch = ViewData["CurrentSearch"] as string;
     var currentStatus = ViewData["CurrentStatus"] as DocumentStatus?;
+    var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+    var canUpload = await PermissionService.HasPermissionAsync(userRole, "Legalization", "Upload");
 }
 
 <!-- Summernote CSS -->
@@ -156,10 +160,13 @@
                                     }
                                 </td>
                                 <td>
-                                    <button type="button" class="btn btn-xs btn-primary" 
-                                            onclick="openUploadModal(@type.Id, '@type.Name', '@(doc?.Status)', '@(doc?.EmissionDate?.ToString("yyyy-MM-dd"))', '@(doc?.ExpirationDate?.ToString("yyyy-MM-dd"))', '@doc?.ProtocolNumber', '@doc?.Cost', '@doc?.Justification', @(doc?.AutomaticRenewal.ToString().ToLower() ?? "false"), @(doc?.RenewalMonths ?? 0), @(isPermanent.ToString().ToLower()), '@(doc?.Tags ?? "")', '#content-storage-@type.Id')">
-                                        <i class="fas fa-edit"></i> Atualizar
-                                    </button>
+                                    @if (canUpload)
+                                    {
+                                        <button type="button" class="btn btn-xs btn-primary" 
+                                                onclick="openUploadModal(@type.Id, '@type.Name', '@(doc?.Status)', '@(doc?.EmissionDate?.ToString("yyyy-MM-dd"))', '@(doc?.ExpirationDate?.ToString("yyyy-MM-dd"))', '@doc?.ProtocolNumber', '@doc?.Cost', '@doc?.Justification', @(doc?.AutomaticRenewal.ToString().ToLower() ?? "false"), @(doc?.RenewalMonths ?? 0), @(isPermanent.ToString().ToLower()), '@(doc?.Tags ?? "")', '#content-storage-@type.Id')">
+                                            <i class="fas fa-edit"></i> Atualizar
+                                        </button>
+                                    }
                                 </td>
                             </tr>
                         }

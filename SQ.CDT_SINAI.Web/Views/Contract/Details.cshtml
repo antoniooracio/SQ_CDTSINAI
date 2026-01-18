@@ -1,7 +1,11 @@
 @model SQ.CDT_SINAI.Shared.Models.Contract
 @using SQ.CDT_SINAI.Shared.Models
+@using System.Security.Claims
+@inject SQ.CDT_SINAI.Web.Services.IPermissionService PermissionService
 @{
     ViewData["Title"] = "Detalhes do Contrato";
+    var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+    var canEdit = await PermissionService.HasPermissionAsync(userRole, "Contract", "Edit");
 }
 
 <section class="content-header">
@@ -49,6 +53,16 @@
 
                         <ul class="list-group list-group-unbordered mb-3">
                             <li class="list-group-item">
+                                <b>Tipo</b> <a class="float-right">
+                                    @switch(Model.Type) {
+                                        case ContractType.Service: <span>Serviço</span>; break;
+                                        case ContractType.Lease: <span>Locação</span>; break;
+                                        case ContractType.Maintenance: <span>Manutenção</span>; break;
+                                        default: <span>Outros</span>; break;
+                                    }
+                                </a>
+                            </li>
+                            <li class="list-group-item">
                                 <b>Status</b> <a class="float-right">@Model.Status</a>
                             </li>
                             <li class="list-group-item">
@@ -58,8 +72,23 @@
                                 <b>Fim Atual</b> <a class="float-right text-danger">@Model.EndDate.ToString("dd/MM/yyyy")</a>
                             </li>
                             <li class="list-group-item">
-                                <b>Valor Mensal</b> <a class="float-right text-success">@Model.MonthlyValue.ToString("C2")</a>
+                                <b>Pagamento</b> <a class="float-right">
+                                    @switch(Model.PaymentFrequency) {
+                                        case PaymentFrequency.Monthly: <span>Mensal</span>; break;
+                                        case PaymentFrequency.Single: <span>Único</span>; break;
+                                        case PaymentFrequency.Installments: <span>Parcelado (@Model.InstallmentCount x)</span>; break;
+                                    }
+                                </a>
                             </li>
+                            <li class="list-group-item">
+                                <b>Valor @(Model.PaymentFrequency == PaymentFrequency.Monthly ? "Mensal" : "Parcela")</b> 
+                                <a class="float-right text-success">@Model.MonthlyValue.ToString("C2")</a>
+                            </li>
+                            @if (Model.TotalContractValue.HasValue) {
+                                <li class="list-group-item">
+                                    <b>Valor Total</b> <a class="float-right text-primary">@Model.TotalContractValue.Value.ToString("C2")</a>
+                                </li>
+                            }
                         </ul>
 
                         @if (!string.IsNullOrEmpty(Model.FilePath))
@@ -69,9 +98,12 @@
                             </a>
                         }
 
-                        <button class="btn btn-warning btn-block" data-toggle="modal" data-target="#modal-amendment">
-                            <i class="fas fa-file-signature"></i> <b>Adicionar Aditivo</b>
-                        </button>
+                        @if (canEdit)
+                        {
+                            <button class="btn btn-warning btn-block" data-toggle="modal" data-target="#modal-amendment">
+                                <i class="fas fa-file-signature"></i> <b>Adicionar Aditivo</b>
+                            </button>
+                        }
                     </div>
                 </div>
             </div>
@@ -150,22 +182,35 @@
             </div>
             <form asp-action="AddAmendment" method="post" enctype="multipart/form-data">
                 <input type="hidden" name="ContractId" value="@Model.Id" />
+                
+                @if (!ViewData.ModelState.IsValid && ViewBag.ShowAmendmentModal == true)
+                {
+                    <div class="alert alert-danger mx-3 mt-3">
+                        <div asp-validation-summary="All" class="text-white"></div>
+                    </div>
+                }
+
                 <div class="modal-body">
                     <div class="form-group">
                         <label>Número do Aditivo</label>
-                        <input type="text" name="AmendmentNumber" class="form-control" placeholder="Ex: 1º Termo Aditivo" required />
+                        <input type="text" name="AmendmentNumber" class="form-control" placeholder="Ex: 1º Termo Aditivo" required data-val="true" data-val-required="O número do aditivo é obrigatório." />
+                        <span class="text-danger field-validation-valid" data-valmsg-for="AmendmentNumber" data-valmsg-replace="true"></span>
                     </div>
                     <div class="row">
                         <div class="col-md-6 form-group">
                             <label>Tipo</label>
-                            <select name="Type" class="form-control" asp-items="Html.GetEnumSelectList<AmendmentType>()"></select>
+                            <select name="Type" class="form-control" asp-items="Html.GetEnumSelectList<AmendmentType>()" required data-val="true" data-val-required="O tipo é obrigatório."></select>
                         </div>
                         <div class="col-md-6 form-group">
                             <label>Data Assinatura</label>
-                            <input type="date" name="SignatureDate" class="form-control" required />
+                            <input type="date" name="SignatureDate" class="form-control" required data-val="true" data-val-required="A data é obrigatória." />
                         </div>
                     </div>
-                    <div class="form-group"><label>Justificativa / Descrição</label><textarea name="Description" class="form-control" rows="2"></textarea></div>
+                    <div class="form-group">
+                        <label>Justificativa / Descrição</label>
+                        <textarea name="Description" class="form-control" rows="2" required data-val="true" data-val-required="A justificativa é obrigatória."></textarea>
+                        <span class="text-danger field-validation-valid" data-valmsg-for="Description" data-valmsg-replace="true"></span>
+                    </div>
                     <hr />
                     <p class="text-muted text-sm">Preencha apenas o que foi alterado:</p>
                     <div class="row">
@@ -193,6 +238,7 @@
 </div>
 
 @section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
         $(document).ready(function () {
             // Máscara de Moeda
@@ -209,6 +255,11 @@
                     }
                 });
             });
+
+            // Reabrir modal se houver erro de validação
+            @if (ViewBag.ShowAmendmentModal == true) {
+                <text>$('#modal-amendment').modal('show');</text>
+            }
         });
     </script>
 }

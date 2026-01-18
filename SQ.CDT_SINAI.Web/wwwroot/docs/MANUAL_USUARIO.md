@@ -131,9 +131,19 @@ Além dos documentos legais (Alvarás), o sistema permite gerenciar contratos de
 
 ### Novo Contrato
 1.  Na tela de contratos da unidade, clique em **Novo Contrato**.
-2.  Preencha os dados principais: Número, Fornecedor, Objeto, Vigência e Valor.
+2.  Preencha os dados principais:
+    *   **Dados Básicos:** Número, Tipo (Serviço, Locação, etc.), Fornecedor e Objeto.
+    *   **Vigência:** Data de Início e Fim.
+    *   **Pagamento:** Selecione a frequência (**Mensal**, **Único** ou **Parcelado**). O sistema ajustará os campos de valor automaticamente.
 3.  Anexe o arquivo PDF do contrato original.
 4.  Clique em **Salvar**.
+
+### Editar Contrato
+Caso precise corrigir informações ou alterar a situação do contrato:
+1.  Na lista de contratos, clique no botão amarelo **Editar** (ícone de lápis).
+2.  Faça as alterações necessárias nos dados ou valores.
+3.  **Status:** Você pode alterar manualmente para **Vigente**, **Rascunho** ou **Cancelado**.
+4.  Clique em **Salvar Alterações**.
 
 ### Adicionar Termo Aditivo (Emenda)
 Quando um contrato sofre alterações (prazo, valor ou escopo), você deve registrar um Aditivo:
@@ -153,6 +163,14 @@ Assim como na legalização, o sistema pode renovar contratos automaticamente se
 2.  Utilize os filtros no topo da tela para buscar por **Período** ou por texto (Nome do Estabelecimento, Número do Contrato ou Fornecedor).
 3.  A tabela exibirá os detalhes da renovação.
 4.  Se necessário, utilize o botão **Reverter** para desfazer uma renovação automática indevida.
+
+### Relatórios de Contratos
+O sistema oferece duas formas de visualizar os dados contratuais:
+1.  **PDF da Unidade:** Na tela de listagem de contratos de um estabelecimento, clique no botão vermelho **Gerar Relatório** para baixar um arquivo PDF com todos os contratos daquela unidade.
+2.  **Dashboard Gerencial:** No menu lateral, vá em **Gestão de Legalização > Relatório Contratos**.
+    *   Utilize os filtros para refinar a busca (Regional, Tipo, Status, etc.).
+    *   Visualize gráficos de distribuição e valores por regional.
+    *   Acompanhe separadamente o **Valor Mensal Recorrente** (custo fixo) e o **Total Pontual/Parcelado** (investimentos).
 
 ---
 

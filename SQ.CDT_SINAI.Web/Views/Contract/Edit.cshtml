@@ -1,0 +1,163 @@
+@model SQ.CDT_SINAI.Shared.DTOs.ContractDto
+@using SQ.CDT_SINAI.Shared.Models
+@{
+    ViewData["Title"] = "Editar Contrato";
+}
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Editar Contrato</h1>
+            </div>
+            <div class="col-sm-6 text-right">
+                <a asp-action="Index" asp-route-establishmentId="@Model.EstablishmentId" class="btn btn-default">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="card card-warning">
+            <div class="card-header">
+                <h3 class="card-title">Dados do Contrato</h3>
+            </div>
+            <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="EstablishmentId" />
+
+                <div class="card-body">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+
+                    <div class="row">
+                        <div class="col-md-4 form-group">
+                            <label>Número do Contrato</label>
+                            <input asp-for="ContractNumber" class="form-control" />
+                            <span asp-validation-for="ContractNumber" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Tipo</label>
+                            <select asp-for="Type" class="form-control" asp-items="Html.GetEnumSelectList<ContractType>()"></select>
+                            <span asp-validation-for="Type" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Status</label>
+                            <select asp-for="Status" class="form-control">
+                                <option value="@ContractStatus.Active">Vigente</option>
+                                <option value="@ContractStatus.Draft">Rascunho</option>
+                                <option value="@ContractStatus.Canceled">Cancelado</option>
+                                @if (Model.Status == ContractStatus.Expired) { <option value="@ContractStatus.Expired">Vencido</option> }
+                            </select>
+                            <span asp-validation-for="Status" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Fornecedor</label>
+                        <input asp-for="VendorName" class="form-control" />
+                        <span asp-validation-for="VendorName" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>Objeto do Contrato</label>
+                        <textarea asp-for="ObjectDescription" class="form-control" rows="2"></textarea>
+                        <span asp-validation-for="ObjectDescription" class="text-danger"></span>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 form-group"><label>Data Início</label><input asp-for="StartDate" type="date" class="form-control" /></div>
+                        <div class="col-md-4 form-group"><label>Data Fim</label><input asp-for="EndDate" type="date" class="form-control" /></div>
+                        <div class="col-md-4 form-group"><label>Frequência Pagto</label>
+                            <select asp-for="PaymentFrequency" id="paymentFrequency" class="form-control" asp-items="Html.GetEnumSelectList<PaymentFrequency>()"></select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 form-group" id="divInstallments" style="@(Model.PaymentFrequency == PaymentFrequency.Installments ? "" : "display:none;")">
+                            <label>Qtd Parcelas</label>
+                            <input asp-for="InstallmentCount" class="form-control" min="2" placeholder="Ex: 3" />
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label id="lblValue">@(Model.PaymentFrequency == PaymentFrequency.Monthly ? "Valor Mensal" : Model.PaymentFrequency == PaymentFrequency.Single ? "Valor Único" : "Valor da Parcela")</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend"><span class="input-group-text">R$</span></div>
+                                <input asp-for="MonthlyValue" type="text" class="form-control mask-money" placeholder="0,00" value="@(Model.MonthlyValue?.ToString("N2", new System.Globalization.CultureInfo("pt-BR")))" />
+                            </div>
+                            <span asp-validation-for="MonthlyValue" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4 form-group" id="divTotalValue" style="@(Model.PaymentFrequency == PaymentFrequency.Monthly ? "display:none;" : "")">
+                            <label>Valor Total Contrato</label>
+                            <div class="input-group"><div class="input-group-prepend"><span class="input-group-text">R$</span></div>
+                            <input asp-for="TotalContractValue" type="text" class="form-control mask-money" placeholder="0,00" value="@(Model.TotalContractValue?.ToString("N2", new System.Globalization.CultureInfo("pt-BR")))" /></div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <div class="custom-control custom-checkbox mt-4">
+                                <input type="checkbox" class="custom-control-input" asp-for="AutomaticRenewal">
+                                <label class="custom-control-label" asp-for="AutomaticRenewal">Renovação Automática</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Meses para Renovação</label>
+                            <input asp-for="RenewalMonths" class="form-control" min="0" placeholder="Ex: 12" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Substituir Arquivo (Opcional)</label>
+                        <input type="file" name="file" class="form-control-file" accept=".pdf" />
+                    </div>
+                </div>
+                <div class="card-footer text-right">
+                    <button type="submit" class="btn btn-warning">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function () {
+            $('.mask-money').mask('#.##0,00', {reverse: true});
+            
+            // Sobrescreve a validação de número do jQuery Validate para aceitar formato PT-BR (vírgula)
+            $.validator.methods.number = function (value, element) {
+                // Aceita números com ponto ou vírgula como separador decimal
+                return this.optional(element) || /^-?(?:\d+|\d{1,3}(?:\.\d{3})*)(?:,\d+)?$/.test(value);
+            }
+
+            $('#paymentFrequency').change(function() {
+                var val = $(this).val();
+                if (val == '1') { // Mensal
+                    $('#lblValue').text('Valor Mensal');
+                    $('#divInstallments').hide();
+                    $('#divTotalValue').hide();
+                } else if (val == '2') { // Único
+                    $('#lblValue').text('Valor Único');
+                    $('#divInstallments').hide();
+                    $('#divTotalValue').show();
+                } else if (val == '3') { // Parcelado
+                    $('#lblValue').text('Valor da Parcela');
+                    $('#divInstallments').show();
+                    $('#divTotalValue').show();
+                }
+            });
+            
+            // Dispara o evento change ao carregar para garantir que os campos corretos estejam visíveis
+            $('#paymentFrequency').trigger('change');
+
+            $('form').on('submit', function() {
+                var moneyInput = $(this).find('.mask-money');
+                moneyInput.each(function() {
+                    var value = $(this).val();
+                    if (value) {
+                        var cleanValue = value.replace(/\./g, "").replace(",", ".");
+                        $(this).val(cleanValue);
+                    }
+                });
+            });
+        });
+    </script>
+}

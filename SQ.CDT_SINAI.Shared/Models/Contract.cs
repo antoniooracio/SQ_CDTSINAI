@@ -13,6 +13,28 @@ namespace SQ.CDT_SINAI.Shared.Models
         Draft = 0       // Rascunho
     }
 
+    public enum ContractType
+    {
+        [Display(Name = "Serviço")]
+        Service = 1,
+        [Display(Name = "Locação")]
+        Lease = 2,
+        [Display(Name = "Manutenção")]
+        Maintenance = 3,
+        [Display(Name = "Outros")]
+        Other = 99
+    }
+
+    public enum PaymentFrequency
+    {
+        [Display(Name = "Mensal (Recorrente)")]
+        Monthly = 1,
+        [Display(Name = "Pagamento Único")]
+        Single = 2,
+        [Display(Name = "Parcelado")]
+        Installments = 3
+    }
+
     public enum AmendmentType
     {
         TermExtension = 1,  // Prorrogação de Prazo
@@ -32,6 +54,8 @@ namespace SQ.CDT_SINAI.Shared.Models
         [Required]
         public string ContractNumber { get; set; } = string.Empty; // Ex: 123/2024
 
+        public ContractType Type { get; set; } = ContractType.Service;
+
         [Required]
         public string VendorName { get; set; } = string.Empty; // Fornecedor
 
@@ -40,7 +64,11 @@ namespace SQ.CDT_SINAI.Shared.Models
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; } // Data Fim Atual (pode ser atualizada por aditivos)
 
-        public decimal MonthlyValue { get; set; } // Valor Atual
+        public decimal MonthlyValue { get; set; } // Valor da Parcela ou Valor Recorrente
+        
+        public PaymentFrequency PaymentFrequency { get; set; } = PaymentFrequency.Monthly;
+        public int? InstallmentCount { get; set; } // Quantidade de Parcelas (se aplicável)
+        public decimal? TotalContractValue { get; set; } // Valor Total do Contrato (se aplicável)
 
         public bool AutomaticRenewal { get; set; }
         public int RenewalMonths { get; set; }

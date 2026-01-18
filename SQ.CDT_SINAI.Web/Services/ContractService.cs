@@ -31,10 +31,17 @@ namespace SQ.CDT_SINAI.Web.Services
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
 
-        public async Task<List<Contract>> GetByEstablishmentAsync(int establishmentId)
+        public async Task<List<Contract>> GetByEstablishmentAsync(int establishmentId, ContractType? type = null, string? search = null)
         {
             AddAuthorizationHeader();
-            return await _httpClient.GetFromJsonAsync<List<Contract>>($"api/contract/establishment/{establishmentId}") ?? new List<Contract>();
+            var url = $"api/contract/establishment/{establishmentId}";
+            var query = new List<string>();
+            if (type.HasValue) query.Add($"type={type.Value}");
+            if (!string.IsNullOrEmpty(search)) query.Add($"search={search}");
+            
+            if (query.Count > 0) url += "?" + string.Join("&", query);
+            
+            return await _httpClient.GetFromJsonAsync<List<Contract>>(url) ?? new List<Contract>();
         }
 
         public async Task<Contract?> GetByIdAsync(int id)
@@ -50,13 +57,17 @@ namespace SQ.CDT_SINAI.Web.Services
             
             content.Add(new StringContent(dto.EstablishmentId.ToString()), nameof(dto.EstablishmentId));
             content.Add(new StringContent(dto.ContractNumber), nameof(dto.ContractNumber));
+            content.Add(new StringContent(((int)dto.Type!.Value).ToString()), nameof(dto.Type));
             content.Add(new StringContent(dto.VendorName), nameof(dto.VendorName));
             if (!string.IsNullOrEmpty(dto.ObjectDescription)) content.Add(new StringContent(dto.ObjectDescription), nameof(dto.ObjectDescription));
-            content.Add(new StringContent(dto.StartDate.ToString("yyyy-MM-dd")), nameof(dto.StartDate));
-            content.Add(new StringContent(dto.EndDate.ToString("yyyy-MM-dd")), nameof(dto.EndDate));
-            content.Add(new StringContent(dto.MonthlyValue.ToString()), nameof(dto.MonthlyValue));
+            content.Add(new StringContent(dto.StartDate!.Value.ToString("yyyy-MM-dd")), nameof(dto.StartDate));
+            content.Add(new StringContent(dto.EndDate!.Value.ToString("yyyy-MM-dd")), nameof(dto.EndDate));
+            content.Add(new StringContent(dto.MonthlyValue!.Value.ToString()), nameof(dto.MonthlyValue));
+            content.Add(new StringContent(((int)dto.PaymentFrequency).ToString()), nameof(dto.PaymentFrequency));
+            if (dto.InstallmentCount.HasValue) content.Add(new StringContent(dto.InstallmentCount.Value.ToString()), nameof(dto.InstallmentCount));
+            if (dto.TotalContractValue.HasValue) content.Add(new StringContent(dto.TotalContractValue.Value.ToString()), nameof(dto.TotalContractValue));
             content.Add(new StringContent(dto.AutomaticRenewal.ToString()), nameof(dto.AutomaticRenewal));
-            content.Add(new StringContent(dto.RenewalMonths.ToString()), nameof(dto.RenewalMonths));
+            content.Add(new StringContent((dto.RenewalMonths ?? 0).ToString()), nameof(dto.RenewalMonths));
 
             if (file != null)
             {
@@ -69,6 +80,39 @@ namespace SQ.CDT_SINAI.Web.Services
             if (response.IsSuccessStatusCode) return null;
             var error = await response.Content.ReadAsStringAsync();
             return error.Trim('"');
+        }
+
+        public async Task<string?> UpdateAsync(int id, ContractDto dto, IFormFile? file)
+        {
+            AddAuthorizationHeader();
+            using var content = new MultipartFormDataContent();
+            
+            content.Add(new StringContent(dto.Id.ToString()), nameof(dto.Id));
+            content.Add(new StringContent(dto.EstablishmentId.ToString()), nameof(dto.EstablishmentId));
+            content.Add(new StringContent(dto.ContractNumber), nameof(dto.ContractNumber));
+            content.Add(new StringContent(((int)dto.Type!.Value).ToString()), nameof(dto.Type));
+            content.Add(new StringContent(dto.VendorName), nameof(dto.VendorName));
+            if (!string.IsNullOrEmpty(dto.ObjectDescription)) content.Add(new StringContent(dto.ObjectDescription), nameof(dto.ObjectDescription));
+            content.Add(new StringContent(dto.StartDate!.Value.ToString("yyyy-MM-dd")), nameof(dto.StartDate));
+            content.Add(new StringContent(dto.EndDate!.Value.ToString("yyyy-MM-dd")), nameof(dto.EndDate));
+            content.Add(new StringContent(dto.MonthlyValue!.Value.ToString()), nameof(dto.MonthlyValue));
+            content.Add(new StringContent(((int)dto.PaymentFrequency).ToString()), nameof(dto.PaymentFrequency));
+            if (dto.InstallmentCount.HasValue) content.Add(new StringContent(dto.InstallmentCount.Value.ToString()), nameof(dto.InstallmentCount));
+            if (dto.TotalContractValue.HasValue) content.Add(new StringContent(dto.TotalContractValue.Value.ToString()), nameof(dto.TotalContractValue));
+            content.Add(new StringContent(dto.AutomaticRenewal.ToString()), nameof(dto.AutomaticRenewal));
+            content.Add(new StringContent((dto.RenewalMonths ?? 0).ToString()), nameof(dto.RenewalMonths));
+            content.Add(new StringContent(((int)dto.Status).ToString()), nameof(dto.Status));
+
+            if (file != null)
+            {
+                var fileContent = new StreamContent(file.OpenReadStream());
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+                content.Add(fileContent, "file", file.FileName);
+            }
+
+            var response = await _httpClient.PutAsync($"api/contract/{id}", content);
+            if (response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadAsStringAsync();
         }
 
         public async Task<string?> AddAmendmentAsync(ContractAmendmentDto dto, IFormFile? file)
@@ -152,6 +196,26 @@ namespace SQ.CDT_SINAI.Web.Services
         {
             AddAuthorizationHeader();
             return await _httpClient.GetFromJsonAsync<decimal>("api/contract/monthly-value");
+        }
+
+        public async Task<(byte[] Content, string FileName)?> GetReportAsync(int establishmentId)
+        {
+            AddAuthorizationHeader();
+            var response = await _httpClient.GetAsync($"api/contract/report/{establishmentId}");
+            if (response.IsSuccessStatusCode)
+            {
+                var fileName = response.Content.Headers.ContentDisposition?.FileName?.Trim('"') ?? $"Relatorio_Contratos_{establishmentId}.pdf";
+                var content = await response.Content.ReadAsByteArrayAsync();
+                return (content, fileName);
+            }
+            return null;
+        }
+
+        public async Task<ContractReportResultDto> GetReportDataAsync(ContractReportFilterDto filter)
+        {
+            AddAuthorizationHeader();
+            var response = await _httpClient.PostAsJsonAsync("api/contract/report-data", filter);
+            return await response.Content.ReadFromJsonAsync<ContractReportResultDto>() ?? new ContractReportResultDto();
         }
     }
 }
